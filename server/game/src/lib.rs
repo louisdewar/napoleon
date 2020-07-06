@@ -189,6 +189,12 @@ impl Game {
                 "Non-napoleon tried to pick allies"
             );
 
+            assert_eq!(
+                ally_cards.len(),
+                self.settings.ally_count,
+                "Napoleon tried to pick incorrect number of allies"
+            );
+
             let mut allies = Vec::new();
 
             // TODO: Napoleon can't pick themselves as an ally. Not an error just don't add
@@ -203,11 +209,12 @@ impl Game {
                 }
             }
 
+            // TODO: napeolon must start game with a card from the trump suit
             self.state = GameState::Playing {
                 napoleon: napoleon.clone(),
                 allies: allies.clone(),
                 trump_suit,
-                current_player: 0,
+                current_player: napoleon.player_id,
                 played_cards: Vec::with_capacity(self.players),
             };
 
@@ -289,10 +296,8 @@ impl Game {
                         allies: allies.clone(),
                     });
                 } else {
-                    // Start the next round one player after the player who went first last round
-                    *current_player = (*current_player + 2) % self.players;
                     return Ok(PlayingEvent::RoundEnded {
-                        next_player: *current_player,
+                        next_player: winner,
                         winner,
                     });
                 }
