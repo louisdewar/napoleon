@@ -1,6 +1,6 @@
 pub mod deck;
 
-use deck::{Card, Deck, Suit};
+pub use deck::{Card, Deck, Suit};
 
 #[derive(Clone)]
 pub struct Napoleon {
@@ -74,6 +74,7 @@ pub struct Game {
     settings: GameSettings,
 }
 
+#[derive(Clone)]
 pub struct GameSettings {
     pub ally_count: usize,
 }
@@ -105,6 +106,10 @@ impl Game {
             },
             settings,
         }
+    }
+
+    pub fn get_settings(&self) -> &GameSettings {
+        &self.settings
     }
 
     pub fn get_hands(&self) -> &[Deck] {
