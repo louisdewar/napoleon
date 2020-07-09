@@ -32,7 +32,8 @@ pub enum RoomEvent {
         player_id: usize,
     },
     BiddingOver {
-        napoleon: Napoleon,
+        napoleon_id: usize,
+        bid: usize,
     },
     NoBids,
     BecomeAlly,
@@ -117,6 +118,10 @@ impl Room {
     }
 
     fn join(&mut self, session_id: usize, username: String, session: Recipient<RoomEvent>) {
+        self.broadcast(RoomEvent::PlayerJoined {
+            player_id: session_id,
+            username: username.clone(),
+        });
         self.players.insert(
             session_id,
             Occupant {
@@ -181,9 +186,11 @@ impl Room {
                                 });
                             }
                             BiddingFinished { mut napoleon } => {
-                                // Reconsider using napoleon struct
-                                napoleon.player_id = id_map[napoleon.player_id];
-                                self.broadcast(RoomEvent::BiddingOver { napoleon });
+                                let napoleon_id = id_map[napoleon.player_id];
+                                self.broadcast(RoomEvent::BiddingOver {
+                                    bid: napoleon.bid,
+                                    napoleon_id,
+                                });
                             }
                         }
                     }
@@ -294,7 +301,7 @@ impl Room {
                             // TODO: decide scoring
                             // Also implement room wide score
                             let (napoleon_score_delta, player_score_delta) =
-                                if napoleon.bet == combined_napoleon_score {
+                                if napoleon.bid == combined_napoleon_score {
                                     (15, -10)
                                 } else {
                                     (-10, 15)
@@ -305,7 +312,7 @@ impl Room {
                                 player_score_delta,
                                 allies,
                                 combined_napoleon_score,
-                                napoleon_bet: napoleon.bet,
+                                napoleon_bet: napoleon.bid,
                             });
                         }
                     },

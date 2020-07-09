@@ -79,7 +79,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Session {
                     self.game_server.do_send(message);
                 }
             }
-            Ok(ws::Message::Binary(bin)) => {}
+            Ok(ws::Message::Binary(_)) => {}
             Ok(ws::Message::Close(reason)) => {
                 // TODO: Tell room + game server to disconnect
                 ctx.close(reason);
@@ -101,15 +101,51 @@ impl Handler<RoomEvent> for Session {
         let message = match event {
             E::JoinedRoom { key, address } => {
                 self.room = Some(address);
-                format!("j{}", key)
+                format!("e{}", key)
             }
-            E::NextBidder { player_id } => format!("n{}", player_id),
+            E::NextBidder { player_id } => format!("bn{}", player_id),
             E::PlayerBid { bid, player_id } => {
                 if let Some(bid) = bid {
-                    format!("b{},{}", player_id, bid)
+                    format!("bp{},{}", player_id, bid)
                 } else {
-                    format!("b{}", player_id)
+                    format!("bp{}", player_id)
                 }
+            }
+            E::PlayerJoined {
+                player_id,
+                username,
+            } => format!("j{},{}", username, player_id),
+            E::NoBids => format!("bn"),
+            E::BiddingOver { bid, napoleon_id } => format!("bo{},{}", bid, napoleon_id),
+            E::AlliesChosen { allies, trump_suit } => {
+                let mut output = String::from("ac");
+                output.push(trump_suit.to_char());
+                for ally in allies {
+                    output.push(',');
+                    output.push_str(&format!("{}", ally));
+                }
+
+                output
+            }
+            E::BecomeAlly => format!("ab"),
+            E::NextPlayer { player_id } => format!("n{}", player_id),
+            E::GameStarted { player_order, .. } => format!(
+                "s{}",
+                player_order
+                    .into_iter()
+                    .map(|id| format!("{}", id))
+                    .collect::<Vec<_>>()
+                    .join(",")
+            ),
+            E::PlayerHand { hand } => format!(
+                "h{}",
+                hand.into_iter()
+                    .map(|card| format!("{}{}", card.number, card.suit.to_char()))
+                    .collect::<Vec<_>>()
+                    .join(",")
+            ),
+            E::CardPlayed { player_id, card } => {
+                format!("p{},{}{}", player_id, card.number, card.suit.to_char())
             }
             _ => {
                 println!("todo");

@@ -16,14 +16,26 @@ impl GameServer {
     }
 
     fn create_room(&mut self, session_id: usize, username: String) {
+        use rand::{distributions::Alphanumeric, Rng};
+        use std::collections::hash_map::Entry;
         // TODO: Make random
         if let Some(recipient) = self.connected_sessions.get(&session_id) {
-            let address = Room::new(session_id, username, recipient.clone()).start();
-            let key = "room_key".to_string();
-            self.rooms.insert(key.clone(), address.clone());
+            let mut rng = rand::thread_rng();
 
-            // Ignore error
-            let _ = recipient.do_send(RoomEvent::JoinedRoom { key, address });
+            loop {
+                let key: String = std::iter::repeat(())
+                    .map(|()| rng.sample(Alphanumeric))
+                    .take(5)
+                    .collect();
+
+                if let Entry::Vacant(entry) = self.rooms.entry(key.clone()) {
+                    let address = Room::new(session_id, username, recipient.clone()).start();
+                    entry.insert(address.clone());
+
+                    let _ = recipient.do_send(RoomEvent::JoinedRoom { key, address });
+                    return;
+                }
+            }
         } else {
             todo!("log internal server error");
         }
@@ -46,9 +58,20 @@ impl GameServer {
     }
 
     fn connect(&mut self, recipient: Recipient<RoomEvent>) -> usize {
-        let id = self.connected_sessions.len() + 1;
-        self.connected_sessions.insert(id, recipient);
-        id
+        use std::collections::hash_map::Entry;
+        loop {
+            let id = rand::random();
+
+            if id == 0 {
+                continue;
+            }
+
+            if let Entry::Vacant(entry) = self.connected_sessions.entry(id) {
+                entry.insert(recipient);
+
+                return id;
+            }
+        }
     }
 }
 

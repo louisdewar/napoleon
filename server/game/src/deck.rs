@@ -6,6 +6,30 @@ pub enum Suit {
     Clubs,
 }
 
+impl Suit {
+    pub fn to_char(&self) -> char {
+        use Suit::*;
+        match &self {
+            Hearts => 'H',
+            Diamonds => 'D',
+            Spades => 'S',
+            Clubs => 'C',
+        }
+    }
+
+    pub fn from_char(c: char) -> Result<Suit, ()> {
+        use Suit::*;
+
+        Ok(match c {
+            'H' => Hearts,
+            'D' => Diamonds,
+            'S' => Spades,
+            'C' => Clubs,
+            _ => return Err(()),
+        })
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Number {
     Two,
@@ -45,6 +69,29 @@ impl From<&Number> for u8 {
     }
 }
 
+impl Number {
+    pub fn from_char(c: char) -> Result<Number, ()> {
+        use Number::*;
+
+        Ok(match c {
+            '2' => Two,
+            '3' => Three,
+            '4' => Four,
+            '5' => Five,
+            '6' => Six,
+            '7' => Seven,
+            '8' => Eight,
+            '9' => Nine,
+            'T' => Ten,
+            'J' => Jack,
+            'Q' => Queen,
+            'K' => King,
+            'A' => Ace,
+            _ => return Err(()),
+        })
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Card {
     pub suit: Suit,
@@ -54,6 +101,13 @@ pub struct Card {
 impl Card {
     pub fn new(suit: Suit, number: Number) -> Card {
         Card { suit, number }
+    }
+
+    pub fn from_chars(s: char, n: char) -> Result<Card, ()> {
+        let suit = Suit::from_char(s)?;
+        let number = Number::from_char(n)?;
+
+        Ok(Card { suit, number })
     }
 }
 
@@ -128,6 +182,10 @@ impl Deck {
         let index = self.inner.iter().position(|c| c == card)?;
         Some(self.inner.remove(index))
     }
+
+    pub fn into_iter(self) -> impl Iterator<Item = Card> {
+        self.inner.into_iter()
+    }
 }
 
 impl std::fmt::Display for Suit {
@@ -156,7 +214,7 @@ impl std::fmt::Display for Number {
             Seven => write!(fmt, "7"),
             Eight => write!(fmt, "8"),
             Nine => write!(fmt, "9"),
-            Ten => write!(fmt, "10"),
+            Ten => write!(fmt, "T"),
             Jack => write!(fmt, "J"),
             Queen => write!(fmt, "Q"),
             King => write!(fmt, "K"),

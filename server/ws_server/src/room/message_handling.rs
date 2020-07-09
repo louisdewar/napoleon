@@ -2,10 +2,10 @@ use super::Room;
 use crate::{game_server::PlayerJoined, WebsocketMessage};
 use actix::prelude::*;
 
-impl Handler<WebsocketMessage> for Room {
-    type Result = ();
+use game::*;
 
-    fn handle(&mut self, ws_message: WebsocketMessage, _context: &mut Self::Context) {
+impl Room {
+    fn handle_message(&mut self, ws_message: WebsocketMessage) -> Result<(), String> {
         let session_id = ws_message.session_id;
         let content = ws_message.content;
         let mut message = content.chars().peekable();
@@ -20,18 +20,49 @@ impl Handler<WebsocketMessage> for Room {
             's' => self.start_game(session_id, game::GameSettings { ally_count: 1 }),
             'b' => {
                 let bid: Option<usize> = if content.len() > 1 {
-                    if let Ok(num) = content[1..].parse() {
-                        Some(num)
-                    } else {
-                        todo!("Handle integer parse error");
-                    }
+                    Some(
+                        content[1..]
+                            .parse()
+                            .map_err(|_| format!("Couldn't parse bid"))?,
+                    )
                 } else {
                     None
                 };
 
                 self.bid(session_id, bid);
             }
+            'a' => {
+                let trump_suit = Suit::from_char(
+                    message
+                        .next()
+                        .ok_or_else(|| format!("pick allies had no trump suit"))?,
+                )
+                .map_err(|_| format!("invalid trump suit char"))?;
+                let mut ally_cards = Vec::new();
+
+                while let (Some(','), Some(n), Some(s)) =
+                    (message.next(), message.next(), message.next())
+                {
+                    let card = Card::from_chars(s, n)
+                        .map_err(|_| format!("invalid card format in pick allies"))?;
+                    ally_cards.push(card);
+                }
+
+                self.pick_allies(session_id, ally_cards, trump_suit);
+            }
             _ => {}
+        }
+
+        Ok(())
+    }
+}
+
+impl Handler<WebsocketMessage> for Room {
+    type Result = ();
+
+    fn handle(&mut self, ws_message: WebsocketMessage, _context: &mut Self::Context) {
+        if let Err(error) = self.handle_message(ws_message) {
+            println!("ERROR: {}", error);
         }
     }
 }
@@ -42,7 +73,7 @@ impl Handler<PlayerJoined> for Room {
     fn handle(&mut self, msg: PlayerJoined, _context: &mut Self::Context) {
         self.join(msg.session_id, msg.username, msg.recipient.clone());
 
-        msg.recipient.do_send(super::RoomEvent::JoinedRoom {
+        let _ = msg.recipient.do_send(super::RoomEvent::JoinedRoom {
             address: msg.room_addr,
             key: msg.room_key,
         });

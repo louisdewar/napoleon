@@ -4,7 +4,7 @@ pub use deck::{Card, Deck, Suit};
 
 #[derive(Clone)]
 pub struct Napoleon {
-    pub bet: usize,
+    pub bid: usize,
     pub player_id: usize,
 }
 
@@ -147,12 +147,15 @@ impl Game {
 
                     if let Some(napoleon) = current_napoleon {
                         assert!(
-                            bet > napoleon.bet,
+                            bet > napoleon.bid,
                             "Tried to bet lower than or equal to current"
                         );
                     }
 
-                    *current_napoleon = Some(Napoleon { player_id, bet });
+                    *current_napoleon = Some(Napoleon {
+                        player_id,
+                        bid: bet,
+                    });
                 }
                 None => {}
             }

@@ -11,5 +11,5 @@ actix-web = "2.0"
 actix = "0.9"
 actix-rt = "1.0"
 actix-web-actors = "2.0"
-
+rand = "0.7"
 game = { path = "../game/" }
