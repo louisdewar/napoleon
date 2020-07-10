@@ -1,0 +1,8 @@
+{
+  "short_name": "Napoleon",
+  "name": "Multiple napoleon card game",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
