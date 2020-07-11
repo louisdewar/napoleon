@@ -50,6 +50,14 @@ impl Room {
 
                 self.pick_allies(session_id, ally_cards, trump_suit);
             }
+            'p' => {
+    
+                let n = message.next().ok_or_else(|| "no card number in play card".to_string())?;
+                let s = message.next().ok_or_else(|| "no card suit in play card".to_string())?;
+                
+                let card = Card::from_chars(s, n).map_err(|_| format!("invalid card format in play card"))?;
+                self.play_card(session_id, card);
+            }
             _ => {}
         }
 
@@ -72,10 +80,5 @@ impl Handler<PlayerJoined> for Room {
 
     fn handle(&mut self, msg: PlayerJoined, _context: &mut Self::Context) {
         self.join(msg.session_id, msg.username, msg.recipient.clone());
-
-        let _ = msg.recipient.do_send(super::RoomEvent::JoinedRoom {
-            address: msg.room_addr,
-            key: msg.room_key,
-        });
     }
 }

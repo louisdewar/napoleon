@@ -99,9 +99,13 @@ impl Handler<RoomEvent> for Session {
     fn handle(&mut self, event: RoomEvent, ctx: &mut Self::Context) {
         use RoomEvent as E;
         let message = match event {
-            E::JoinedRoom { key, address } => {
+            E::JoinedRoom { key, address, players } => {
                 self.room = Some(address);
-                format!("e{}", key)
+                let mut s = format!("e{}", key);
+                for (username, session_id) in players {
+                    s.push_str(format!(",{},{}", username, session_id));
+                }
+                s
             }
             E::NextBidder { player_id } => format!("bn{}", player_id),
             E::PlayerBid { bid, player_id } => {
@@ -147,10 +151,15 @@ impl Handler<RoomEvent> for Session {
             E::CardPlayed { player_id, card } => {
                 format!("p{},{}{}", player_id, card.number, card.suit.to_char())
             }
-            _ => {
-                println!("todo");
-
-                return;
+            E::RoundOver { winner } => {
+                format!("r{}", winner)
+            }
+            E::GameOver { allies, napoleon_score_delta, player_score_delta, napoleon_bet, combined_napoleon_score } => {
+                let mut s = format!("g{},{},{},{}", napoleon_score_delta, player_score_delta, napoleon_bet, combined_napoleon_score);
+                for ally in allies {
+                    s.push_str(format!(",{}", ally));
+                }
+                s
             }
         };
 
