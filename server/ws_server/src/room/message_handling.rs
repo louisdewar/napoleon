@@ -51,7 +51,6 @@ impl Room {
                 self.pick_allies(session_id, ally_cards, trump_suit);
             }
             'p' => {
-    
                 let n = message.next().ok_or_else(|| "no card number in play card".to_string())?;
                 let s = message.next().ok_or_else(|| "no card suit in play card".to_string())?;
                 
