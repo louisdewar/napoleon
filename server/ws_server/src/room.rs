@@ -11,6 +11,7 @@ pub enum RoomEvent {
     JoinedRoom {
         key: String,
         address: Addr<Room>,
+        players: Vec<(String, usize)>,
     },
     /// Sent when a player joins the room
     PlayerJoined {
@@ -129,6 +130,11 @@ impl Room {
                 recipient: session,
             },
         );
+        let _ = msg.recipient.do_send(super::RoomEvent::JoinedRoom {
+            address: msg.room_addr,
+            key: msg.room_key,
+            players: self.player.iter().map(|(session_id, occ)| (occ.username, session_id)).collect(),
+        });
     }
 
     fn start_game(&mut self, session_id: usize, settings: GameSettings) {
