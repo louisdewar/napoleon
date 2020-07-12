@@ -67,6 +67,7 @@ impl GameServer {
             }
 
             if let Entry::Vacant(entry) = self.connected_sessions.entry(id) {
+                println!("New recipient given id {}", id);
                 entry.insert(recipient);
 
                 return id;

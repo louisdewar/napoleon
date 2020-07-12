@@ -3,10 +3,19 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
+import { Provider } from 'react-redux';
+import store from './state/store';
+
+import WebsocketManager from './state/websocket_manager';
+
+new WebsocketManager('ws://localhost:3001/ws/', store);
+
 ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+  <Provider store={store}>
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  </Provider>,
   document.getElementById('root')
 );
 
