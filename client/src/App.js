@@ -24,6 +24,7 @@ function App() {
       return (
         <div className="App">
           Connected our id is {user_id} and we are in room {room.key}.
+          There are {Object.keys(room.users).length} users connected.
         </div>
       );
     }

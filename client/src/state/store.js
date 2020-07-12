@@ -26,12 +26,23 @@ function mainReducer(state = {}, action) {
   switch (action.type) {
     case 'WEBSOCKET_CONNECT':
       return {
-              connected: true,
-              socket: action.socket,
-              userID: action.userID
+         connected: true,
+         socket: action.socket,
+         userID: action.userID
       };
     case 'JOINED_ROOM':
-      newState.room = { key: action.key };
+      newState.room = { key: action.key, users: action.users };
+      return newState;
+    case 'PLAYER_JOIN':
+      const newRoom = { ...newState.room };
+      newState.room = newRoom;
+
+      const newUsers = { ...newRoom.users };
+      newUsers[action.userID] = {
+        username: action.username
+      };
+
+      newState.room.users = newUsers;
       return newState;
     default:
       if (action.type.startsWith('GAME_')) {
