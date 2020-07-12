@@ -118,7 +118,14 @@ impl Room {
         }
     }
 
-    fn join(&mut self, session_id: usize, username: String, session: Recipient<RoomEvent>) {
+    fn join(
+        &mut self,
+        session_id: usize,
+        username: String,
+        session: Recipient<RoomEvent>,
+        room_key: String,
+        room_addr: Addr<Room>,
+    ) {
         self.broadcast(RoomEvent::PlayerJoined {
             player_id: session_id,
             username: username.clone(),
@@ -127,13 +134,17 @@ impl Room {
             session_id,
             Occupant {
                 username,
-                recipient: session,
+                recipient: session.clone(),
             },
         );
-        let _ = msg.recipient.do_send(super::RoomEvent::JoinedRoom {
-            address: msg.room_addr,
-            key: msg.room_key,
-            players: self.player.iter().map(|(session_id, occ)| (occ.username, session_id)).collect(),
+        let _ = session.do_send(super::RoomEvent::JoinedRoom {
+            address: room_addr,
+            key: room_key,
+            players: self
+                .players
+                .iter()
+                .map(|(session_id, occ)| (occ.username.clone(), *session_id))
+                .collect(),
         });
     }
 
@@ -191,7 +202,7 @@ impl Room {
                                     player_id: id_map[player_id],
                                 });
                             }
-                            BiddingFinished { mut napoleon } => {
+                            BiddingFinished { napoleon } => {
                                 let napoleon_id = id_map[napoleon.player_id];
                                 self.broadcast(RoomEvent::BiddingOver {
                                     bid: napoleon.bid,
@@ -271,7 +282,6 @@ impl Room {
     }
 
     fn play_card(&mut self, session_id: usize, card: Card) {
-        use PlayingError::*;
         use PlayingEvent::*;
 
         if let RoomState::InGame {

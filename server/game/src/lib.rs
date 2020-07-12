@@ -66,7 +66,6 @@ pub enum PlayingError {
 }
 
 pub struct Game {
-    deck: Deck,
     players: usize,
     hands: Vec<Deck>,
     score: Vec<usize>,
@@ -96,7 +95,6 @@ impl Game {
         }
 
         Game {
-            deck,
             players,
             hands,
             score: vec![0; players],

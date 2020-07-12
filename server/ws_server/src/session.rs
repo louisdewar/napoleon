@@ -99,11 +99,15 @@ impl Handler<RoomEvent> for Session {
     fn handle(&mut self, event: RoomEvent, ctx: &mut Self::Context) {
         use RoomEvent as E;
         let message = match event {
-            E::JoinedRoom { key, address, players } => {
+            E::JoinedRoom {
+                key,
+                address,
+                players,
+            } => {
                 self.room = Some(address);
                 let mut s = format!("e{}", key);
                 for (username, session_id) in players {
-                    s.push_str(format!(",{},{}", username, session_id));
+                    s.push_str(&format!(",{},{}", username, session_id));
                 }
                 s
             }
@@ -151,13 +155,20 @@ impl Handler<RoomEvent> for Session {
             E::CardPlayed { player_id, card } => {
                 format!("p{},{}{}", player_id, card.number, card.suit.to_char())
             }
-            E::RoundOver { winner } => {
-                format!("r{}", winner)
-            }
-            E::GameOver { allies, napoleon_score_delta, player_score_delta, napoleon_bet, combined_napoleon_score } => {
-                let mut s = format!("g{},{},{},{}", napoleon_score_delta, player_score_delta, napoleon_bet, combined_napoleon_score);
+            E::RoundOver { winner } => format!("r{}", winner),
+            E::GameOver {
+                allies,
+                napoleon_score_delta,
+                player_score_delta,
+                napoleon_bet,
+                combined_napoleon_score,
+            } => {
+                let mut s = format!(
+                    "g{},{},{},{}",
+                    napoleon_score_delta, player_score_delta, napoleon_bet, combined_napoleon_score
+                );
                 for ally in allies {
-                    s.push_str(format!(",{}", ally));
+                    s.push_str(&format!(",{}", ally));
                 }
                 s
             }
