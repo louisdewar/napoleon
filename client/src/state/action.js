@@ -17,3 +17,7 @@ export function gameReceiveHand(hand) {
 export function gameNextBidder(playerID) {
   return { type: 'GAME_NEXT_BIDDER', playerID };
 }
+
+export function playerJoined(username, userID){
+  return { type: 'PLAYER_JOIN', username, userID };
+}
