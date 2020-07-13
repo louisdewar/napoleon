@@ -23,17 +23,13 @@ function App() {
     } else {
       return (
         <div className="App">
-          Connected our id is {user_id} and we are in room {room.key}.
-          There are {Object.keys(room.users).length} users connected.
+          Connected our id is {user_id} and we are in room {room.key}. There are
+          {Object.keys(room.users).length} users connected.
         </div>
       );
     }
   } else {
-    return (
-      <div className="App">
-        Not connected.
-      </div>
-    );
+    return <div className="App">Not connected.</div>;
   }
 }
 
