@@ -108,4 +108,29 @@ export default class WebsocketManager {
   createRoom(username) {
     this.socket.send('c' + username);
   }
+
+  joinRoom(username, roomKey) {
+    this.socket.send('j' + username + ',' + roomKey);
+  }
+
+  startGame() {
+    this.socket.send('s');
+  }
+
+  bid(bid) {
+    if (bid){
+      this.socket.send('b' + bid);
+    } else{
+      this.socket.send('b');
+    }
+  }
+
+  pickAllies(trumpSuit, allyCards) {
+    const allies = allyCards.map(card => card.number + card.suit).join(',');
+    this.socket.send('a' + trumpSuit + ',' + allies);
+  }
+
+  playCard(card) {
+    this.socket.send('p' + card);
+  }
 }
