@@ -16,6 +16,19 @@ function gameReducer(state = {}, action) {
   case 'GAME_NEXT_BIDDER':
     newState.bidder = action.playerID;
     return newState;
+  case 'GAME_PLAYER_BID':
+    newState.bid = action.bid; // we don't really need to know the id of the player who bid, do we?.
+    return newState;
+  case 'GAME_NO_BIDS':
+    return { game_state: 'noBids' };
+  case 'GAME_BIDDING_OVER':
+    newState.napoleon = {napoleonBid: action.bid, napoleonID: action.napoleonID};
+    newState.game_state = 'biddingOver';
+    return newState;
+  case 'GAME_ALLIES_CHOSEN':
+    newState.trumpSuit = action.trumpSuit;
+    newState.allies = action.allies;
+    return newState;
   default:
     return state;
   }

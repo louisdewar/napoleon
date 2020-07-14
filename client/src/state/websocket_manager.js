@@ -1,4 +1,4 @@
-import { websocketConnect, joinedRoom, playerJoined, gameStart, gameReceiveHand } from './action';
+import { websocketConnect, joinedRoom, playerJoined, gameStart, gameReceiveHand, gamePlayerBid, gameNoBids, gameBiddingOver, gameAlliesChosen } from './action';
 
 export default class WebsocketManager {
   constructor(host, store) {
@@ -36,13 +36,36 @@ export default class WebsocketManager {
       const playerID = msg.slice(2);
       this.store.dispatch(playerID);
     } else if (msg[0] === 'h') {
-      //`h({card_number}{card_suit}(,{card_number}{card_suit})*)?`
       const cards = msg.slice(1).split(',');
       const hand = [];
       for (var card of cards) {
         hand.push({ number: card[0], suit: card[1] });
       }
       this.store.dispatch(gameReceiveHand(hand));
+    } else if (msg.slice(0, 2) === 'bp'){
+      const playerBid = msg.slice(1).split(',');
+      const playerID = playerBid[0];
+      if (playerBid.length === 2){
+        const bid = playerBid[1];
+        this.store.dispatch(gamePlayerBid(playerID, bid));
+      } else{
+        this.store.dispatch(gamePlayerBid(playerID));
+      }
+    } else if (msg.slice(0, 2) === 'nb') {
+      this.store.dispatch(gameNoBids());
+    } else if (msg.slice(0,2) === 'bo') {
+      const parts = msg.slice(2).split(',');
+      const bid = parts[0];
+      const napoleonID = parts[1];
+      this.store.dispatch(gameBiddingOver(bid, napoleonID));
+    } else if (msg.slice(0, 2) === 'ac'){
+      const parts = msg.slice(2).split(',');
+      const trumpSuit = parts[0];
+      const allies = [];
+      for (i = 1; i < parts.length; i++){
+        allies.push(parts[i]);
+      }
+      this.store.dispatch(gameAlliesChosen(trumpSuit, allies));
     } else {
       console.error(`Unknown websocket message '${msg}'`);
     }

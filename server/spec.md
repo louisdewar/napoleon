@@ -25,7 +25,7 @@ These commands are handled in `session.rs`.
 `j{username},{player_id}`
 
 ### NoBids
-`bn`
+`nb`
 
 ### BiddingOver
 `bo{bid},{napoleon_id}`

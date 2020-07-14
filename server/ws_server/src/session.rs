@@ -123,7 +123,7 @@ impl Handler<RoomEvent> for Session {
                 player_id,
                 username,
             } => format!("j{},{}", username, player_id),
-            E::NoBids => format!("bn"),
+            E::NoBids => format!("nb"),
             E::BiddingOver { bid, napoleon_id } => format!("bo{},{}", bid, napoleon_id),
             E::AlliesChosen { allies, trump_suit } => {
                 let mut output = String::from("ac");
