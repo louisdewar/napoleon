@@ -2,8 +2,8 @@ export function websocketConnect(socket, userID) {
   return { type: 'WEBSOCKET_CONNECT', socket, userID };
 }
 
-export function joinedRoom(key, users) {
-  return { type: 'JOINED_ROOM', key, users };
+export function joinedRoom(key, host, users) {
+  return { type: 'JOINED_ROOM', key, host, users };
 }
 
 export function gameStart(playerOrder) {
@@ -18,7 +18,7 @@ export function gameNextBidder(playerID) {
   return { type: 'GAME_NEXT_BIDDER', playerID };
 }
 
-export function playerJoined(username, userID){
+export function playerJoined(username, userID) {
   return { type: 'PLAYER_JOIN', username, userID };
 }
 
@@ -33,7 +33,7 @@ export function gameNoBids() {
 }
 
 export function gameBiddingOver(bid, napoleonID) {
-  return { type: 'GAME_BIDDING_OVER', bid, napoleonID }; 
+  return { type: 'GAME_BIDDING_OVER', bid, napoleonID };
 }
 
 export function gameAlliesChosen(trumpSuit, allies = []) {
@@ -56,6 +56,19 @@ export function gameRoundOver(winnerPlayerID) {
   return { type: 'GAME_ROUND_OVER', winnerPlayerID };
 }
 
-export function gameOver(napoleonScoreDelta, playerScoreDelta, napoleonBet, combinedNapoleonScore, allies){
-  return { type: 'GAME_OVER', napoleonScoreDelta, playerScoreDelta, napoleonBet, combinedNapoleonScore, allies };
+export function gameOver(
+  napoleonScoreDelta,
+  playerScoreDelta,
+  napoleonBet,
+  combinedNapoleonScore,
+  allies
+) {
+  return {
+    type: 'GAME_OVER',
+    napoleonScoreDelta,
+    playerScoreDelta,
+    napoleonBet,
+    combinedNapoleonScore,
+    allies,
+  };
 }

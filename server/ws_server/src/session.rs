@@ -101,11 +101,12 @@ impl Handler<RoomEvent> for Session {
         let message = match event {
             E::JoinedRoom {
                 key,
+                host,
                 address,
                 players,
             } => {
                 self.room = Some(address);
-                let mut s = format!("e{}", key);
+                let mut s = format!("e{},{}", key, host);
                 for (username, session_id) in players {
                     s.push_str(&format!(",{},{}", username, session_id));
                 }

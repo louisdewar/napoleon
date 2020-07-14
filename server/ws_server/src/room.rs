@@ -10,6 +10,7 @@ pub enum RoomEvent {
     /// Sent to the player who joins a room (sent in game_server)
     JoinedRoom {
         key: String,
+        host: usize,
         address: Addr<Room>,
         players: Vec<(String, usize)>,
     },
@@ -140,6 +141,7 @@ impl Room {
         let _ = session.do_send(super::RoomEvent::JoinedRoom {
             address: room_addr,
             key: room_key,
+            host: self.host,
             players: self
                 .players
                 .iter()

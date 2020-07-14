@@ -7,9 +7,14 @@ function pushItem(array, item) {
 function gameReducer(state = {}, action, rootState) {
   let newState = { ...state };
 
-  switch(action.type) {
+  switch (action.type) {
   case 'GAME_START':
-    return { game_state: 'BIDDING', playerOrder: action.playerOrder, bids: {}, cardsPlayed: {} }; // check "cardsPlayed" decisition
+    return {
+      game_state: 'BIDDING',
+      playerOrder: action.playerOrder,
+      bids: {},
+      cardsPlayed: {},
+    }; // check "cardsPlayed" decisition
   case 'GAME_RECEIVE_HAND':
     newState.hand = action.cards;
     return newState;
@@ -22,7 +27,10 @@ function gameReducer(state = {}, action, rootState) {
   case 'GAME_NO_BIDS':
     return { game_state: 'NO_BIDS' };
   case 'GAME_BIDDING_OVER':
-    newState.napoleon = {napoleonBid: action.bid, napoleonID: action.napoleonID};
+    newState.napoleon = {
+      napoleonBid: action.bid,
+      napoleonID: action.napoleonID,
+    };
     newState.game_state = 'BIDDING_OVER';
     return newState;
   case 'GAME_ALLIES_CHOSEN':
@@ -32,17 +40,23 @@ function gameReducer(state = {}, action, rootState) {
   case 'GAME_NEXT_PLAYER':
     newState.playerID = action.playerID;
     return newState;
-  case 'GAME_CARD_PLAYED':{
-    if (rootState.userID === action.playerID){
+  case 'GAME_CARD_PLAYED': {
+    if (rootState.userID === action.playerID) {
       const newHand = [];
-      for (var i = 0; i < newState.hand.length; i++){
-        if (newState.hand[i].number !== action.card.number || newState.hand[i].suit !== action.card.suit){
-          newHand.push({number: newState.hand[i].number, suit: newState.hand[i].suit});
+      for (var i = 0; i < newState.hand.length; i++) {
+        if (
+          newState.hand[i].number !== action.card.number ||
+            newState.hand[i].suit !== action.card.suit
+        ) {
+          newHand.push({
+            number: newState.hand[i].number,
+            suit: newState.hand[i].suit,
+          });
         }
       }
       newState.hand = newHand;
     }
-    const newCardsPlayed = {...newState.cardsPlayed };
+    const newCardsPlayed = { ...newState.cardsPlayed };
     newCardsPlayed[action.playerID] = action.card;
     newState.cardsPlayed = newCardsPlayed;
     return newState;
@@ -69,10 +83,14 @@ function mainReducer(state = {}, action) {
     return {
       connected: true,
       socket: action.socket,
-      userID: action.userID
+      userID: action.userID,
     };
   case 'JOINED_ROOM':
-    newState.room = { key: action.key, users: action.users };
+    newState.room = {
+      key: action.key,
+      users: action.users,
+      host: action.host,
+    };
     return newState;
   case 'PLAYER_JOIN': {
     const newRoom = { ...newState.room };
@@ -80,7 +98,7 @@ function mainReducer(state = {}, action) {
 
     const newUsers = { ...newRoom.users };
     newUsers[action.userID] = {
-      username: action.username
+      username: action.username,
     };
     newState.room.users = newUsers;
     return newState;

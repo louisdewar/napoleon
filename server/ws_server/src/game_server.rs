@@ -29,10 +29,16 @@ impl GameServer {
                     .collect();
 
                 if let Entry::Vacant(entry) = self.rooms.entry(key.clone()) {
-                    let address = Room::new(session_id, username.clone(), recipient.clone()).start();
+                    let address =
+                        Room::new(session_id, username.clone(), recipient.clone()).start();
                     entry.insert(address.clone());
 
-                    let _ = recipient.do_send(RoomEvent::JoinedRoom { key, address, players: vec![(username, session_id)] });
+                    let _ = recipient.do_send(RoomEvent::JoinedRoom {
+                        key,
+                        host: session_id,
+                        address,
+                        players: vec![(username, session_id)],
+                    });
                     return;
                 }
             }

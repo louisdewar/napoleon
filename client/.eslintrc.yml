@@ -14,7 +14,7 @@ plugins:
   - react
 
 settings:
-  react: 
+  react:
     version: detect
 
 rules:
@@ -33,4 +33,4 @@ rules:
   arrow-parens:
     - error
     - as-needed
-  
+  react/prop-types: 0

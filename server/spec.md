@@ -13,7 +13,7 @@ suit = H|D|C|S
 These commands are handled in `session.rs`.
 
 ### Joined Room
-`e{key}(,{username},{session_id})+`
+`e{key},{host_id}(,{username},{session_id})+`
 
 ### NextBidder
 `bn{player_id}`
