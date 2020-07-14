@@ -1,4 +1,9 @@
-import { websocketConnect, joinedRoom, playerJoined, gameStart, gameReceiveHand, gamePlayerBid, gameNoBids, gameBiddingOver, gameAlliesChosen } from './action';
+import { 
+  websocketConnect, joinedRoom, playerJoined, 
+  gameStart, gameReceiveHand, gamePlayerBid, 
+  gameNoBids, gameBiddingOver, gameAlliesChosen, 
+  gameNextPlayer, gameCardPlayed, gameRoundOver,
+  gameOver } from './action';
 
 export default class WebsocketManager {
   constructor(host, store) {
@@ -31,7 +36,13 @@ export default class WebsocketManager {
       this.store.dispatch(playerJoined(username, userID));
 
     } else if (msg[0] === 's') {
-      this.store.dispatch(gameStart());
+      const parts = msg.slice(1).split(',');
+      const playerOrder = [];
+      for (var playerID in parts){
+        playerOrder.push(playerID);
+      }
+      this.store.dispatch(gameStart(playerOrder));
+
     } else if (msg.slice(0, 2) === 'bn') {
       const playerID = msg.slice(2);
       this.store.dispatch(playerID);
@@ -58,7 +69,7 @@ export default class WebsocketManager {
       const bid = parts[0];
       const napoleonID = parts[1];
       this.store.dispatch(gameBiddingOver(bid, napoleonID));
-    } else if (msg.slice(0, 2) === 'ac'){
+    } else if (msg.slice(0, 2) === 'ac') {
       const parts = msg.slice(2).split(',');
       const trumpSuit = parts[0];
       const allies = [];
@@ -66,7 +77,30 @@ export default class WebsocketManager {
         allies.push(parts[i]);
       }
       this.store.dispatch(gameAlliesChosen(trumpSuit, allies));
-    } else {
+    } else if (msg[0] === 'n') {
+      const playerID = msg.slice(1);
+      this.store.dispatch(gameNextPlayer(playerID));
+    } else if (msg[0] === 'p'){
+      const parts = msg.slice(1).split(',');
+      const playerID = parts[0];
+      const card = { number: parts[1][0], suit: parts[1][1] };
+      this.store.dispatch(gameCardPlayed(playerID, card));
+    } else if (msg[0] === 'r'){
+      const winnerPlayerID = msg.slice(1);
+      this.store.dispatch(gameRoundOver(winnerPlayerID));
+    } else if (msg[0] === 'g'){
+      //`g{napoleon_score_delta},{player_score_delta},{napoleon_bet},{combined_napoleon_score}(,{ally})*`
+      const parts = msg.slice(1).split(',');
+      const [napoleonScoreDelta, playerScoreDelta, napoleonBet, combinedNapoleonScore] = [parts[0], parts[1], parts[2] , parts[3]]; 
+      const allies = [];
+      if (parts.length > 4){
+        for (i = 4; i < parts.length; i++){
+          allies.push(parts[i]);
+        }
+      }
+      this.store.dispatch(gameOver(napoleonScoreDelta, playerScoreDelta, napoleonBet, combinedNapoleonScore, allies));
+    }
+    else {
       console.error(`Unknown websocket message '${msg}'`);
     }
   }
