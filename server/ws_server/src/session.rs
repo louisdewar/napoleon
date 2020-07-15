@@ -131,20 +131,33 @@ impl Handler<RoomEvent> for Session {
                 output.push(trump_suit.to_char());
                 for ally in allies {
                     output.push(',');
-                    output.push_str(&format!("{}", ally));
+                    output.push_str(&format!("{},{}", ally.number, ally.suit.to_char()));
                 }
 
                 output
             }
             E::BecomeAlly => format!("ab"),
-            E::NextPlayer { player_id } => format!("n{}", player_id),
-            E::GameStarted { player_order, .. } => format!(
-                "s{}",
+            E::NextPlayer {
+                player_id,
+                required_suit,
+            } => {
+                if let Some(suit) = required_suit {
+                    format!("n{},{}", player_id, suit.to_char())
+                } else {
+                    format!("n{}", player_id)
+                }
+            }
+            E::GameStarted {
+                player_order,
+                game_settings,
+            } => format!(
+                "s{}\n{}",
                 player_order
                     .into_iter()
                     .map(|id| format!("{}", id))
                     .collect::<Vec<_>>()
-                    .join(",")
+                    .join(","),
+                serde_json::to_string(&game_settings).expect("Serialization failed"),
             ),
             E::PlayerHand { hand } => format!(
                 "h{}",

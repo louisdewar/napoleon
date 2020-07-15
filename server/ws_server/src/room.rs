@@ -49,6 +49,7 @@ pub enum RoomEvent {
     },
     NextPlayer {
         player_id: usize,
+        required_suit: Option<Suit>,
     },
     RoundOver {
         winner: usize,
@@ -256,7 +257,7 @@ impl Room {
                         AlliesChosen { allies } => {
                             self.broadcast(RoomEvent::AlliesChosen {
                                 allies: ally_cards,
-                                trump_suit,
+                                trump_suit: trump_suit.clone(),
                             });
 
                             for ally in allies {
@@ -267,6 +268,7 @@ impl Room {
                             // next_player
                             self.broadcast(RoomEvent::NextPlayer {
                                 player_id: session_id,
+                                required_suit: Some(trump_suit),
                             });
                         }
                     },
@@ -294,9 +296,13 @@ impl Room {
             if let Some(player_id) = id_map.iter().position(|id| session_id == *id) {
                 match game.play_card(player_id, card) {
                     Ok(event) => match event {
-                        NextPlayer { player_id } => {
+                        NextPlayer {
+                            player_id,
+                            required_suit,
+                        } => {
                             self.broadcast(RoomEvent::NextPlayer {
                                 player_id: id_map[player_id],
+                                required_suit: Some(required_suit),
                             });
                         }
                         RoundEnded {
@@ -309,6 +315,7 @@ impl Room {
 
                             self.broadcast(RoomEvent::NextPlayer {
                                 player_id: id_map[next_player],
+                                required_suit: None,
                             });
                         }
                         GameEnded {

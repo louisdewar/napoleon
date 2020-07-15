@@ -2,6 +2,8 @@ pub mod deck;
 
 pub use deck::{Card, Deck, Suit};
 
+use serde::Serialize;
+
 #[derive(Clone)]
 pub struct Napoleon {
     pub bid: usize,
@@ -49,6 +51,7 @@ pub enum PostBiddingError {
 pub enum PlayingEvent {
     NextPlayer {
         player_id: usize,
+        required_suit: Suit,
     },
     RoundEnded {
         winner: usize,
@@ -73,7 +76,7 @@ pub struct Game {
     settings: GameSettings,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct GameSettings {
     pub ally_count: usize,
 }
@@ -311,6 +314,7 @@ impl Game {
                 *current_player = (*current_player + 1) % self.players;
                 return Ok(PlayingEvent::NextPlayer {
                     player_id: *current_player,
+                    required_suit: played_cards.first().unwrap().suit.clone(),
                 });
             }
         } else {

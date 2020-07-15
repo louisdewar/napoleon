@@ -6,8 +6,8 @@ export function joinedRoom(key, host, users) {
   return { type: 'JOINED_ROOM', key, host, users };
 }
 
-export function gameStart(playerOrder) {
-  return { type: 'GAME_START', playerOrder };
+export function gameStart(playerOrder, settings) {
+  return { type: 'GAME_START', playerOrder, settings };
 }
 
 export function gameReceiveHand(hand) {
@@ -40,12 +40,12 @@ export function gameAlliesChosen(trumpSuit, allies = []) {
   return { type: 'GAME_ALLIES_CHOSEN', trumpSuit, allies };
 }
 
-export function becomeAlly() {
+export function gameBecomeAlly() {
   return { type: 'GAME_BECOME_ALLY' };
 }
 
-export function gameNextPlayer(playerID) {
-  return { type: 'GAME_NEXT_PLAYER', playerID };
+export function gameNextPlayer(playerID, requiredSuit) {
+  return { type: 'GAME_NEXT_PLAYER', playerID, requiredSuit };
 }
 
 export function gameCardPlayed(playerID, card) {

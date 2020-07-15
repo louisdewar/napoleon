@@ -1,44 +1,43 @@
 import { createStore } from 'redux';
 
-function pushItem(array, item) {
-  return [...array, item];
-}
-
 function gameReducer(state = {}, action, rootState) {
   let newState = { ...state };
 
   switch (action.type) {
   case 'GAME_START':
     return {
-      game_state: 'BIDDING',
+      gameState: 'START',
       playerOrder: action.playerOrder,
+      settings: action.settings,
       bids: {},
       cardsPlayed: {},
-    }; // check "cardsPlayed" decisition
+    };
   case 'GAME_RECEIVE_HAND':
-    newState.hand = action.cards;
+    newState.hand = action.hand;
     return newState;
   case 'GAME_NEXT_BIDDER':
+    newState.gameState = 'BIDDING';
     newState.bidder = action.playerID;
     return newState;
   case 'GAME_PLAYER_BID':
     newState.bids[action.playerID] = action.bid;
+    newState.lastBid = action.bid;
     return newState;
   case 'GAME_NO_BIDS':
-    return { game_state: 'NO_BIDS' };
+    return { gameState: 'NO_BIDS' };
   case 'GAME_BIDDING_OVER':
-    newState.napoleon = {
-      napoleonBid: action.bid,
-      napoleonID: action.napoleonID,
-    };
-    newState.game_state = 'BIDDING_OVER';
+    newState.napoleonID = action.napoleonID;
+    newState.napoleonBid = action.bid;
+    newState.gameState = 'POST_BIDDING';
     return newState;
   case 'GAME_ALLIES_CHOSEN':
     newState.trumpSuit = action.trumpSuit;
     newState.allies = action.allies;
     return newState;
   case 'GAME_NEXT_PLAYER':
+    newState.gameState = 'ROUND';
     newState.playerID = action.playerID;
+    newState.requiredSuit = action.requiredSuit;
     return newState;
   case 'GAME_CARD_PLAYED': {
     if (rootState.userID === action.playerID) {
@@ -70,6 +69,9 @@ function gameReducer(state = {}, action, rootState) {
     newState.napoleonBet = action.napoleonBet;
     newState.combinedNapoleonScore = action.combinedNapoleonScore;
     newState.allies = action.allies;
+    return newState;
+  case 'GAME_BECOME_ALLY':
+    newState.ally = true;
     return newState;
   default:
     return state;
@@ -106,11 +108,12 @@ function mainReducer(state = {}, action) {
   default:
     if (action.type.startsWith('GAME_')) {
       if (state.room) {
-        newState.game = gameReducer(state.room.game, action);
+        newState.room = { ...newState.room };
+        newState.room.game = gameReducer(state.room.game, action);
       }
     }
 
-    return state;
+    return newState;
   }
 }
 

@@ -13,6 +13,7 @@ import {
   gameCardPlayed,
   gameRoundOver,
   gameOver,
+  gameBecomeAlly,
 } from './action';
 
 export default class WebsocketManager {
@@ -46,12 +47,10 @@ export default class WebsocketManager {
 
       this.store.dispatch(playerJoined(username, userID));
     } else if (msg[0] === 's') {
-      const parts = msg.slice(1).split(',');
-      const playerOrder = [];
-      for (var playerID in parts) {
-        playerOrder.push(playerID);
-      }
-      this.store.dispatch(gameStart(playerOrder));
+      const lines = msg.slice(1).split('\n');
+      const playerOrder = lines[0].split(',');
+      const settings = JSON.parse(lines[1]);
+      this.store.dispatch(gameStart(playerOrder, settings));
     } else if (msg.slice(0, 2) === 'bn') {
       const playerID = msg.slice(2);
       this.store.dispatch(gameNextBidder(playerID));
@@ -66,7 +65,7 @@ export default class WebsocketManager {
       const playerBid = msg.slice(1).split(',');
       const playerID = playerBid[0];
       if (playerBid.length === 2) {
-        const bid = playerBid[1];
+        const bid = parseInt(playerBid[1], 10);
         this.store.dispatch(gamePlayerBid(playerID, bid));
       } else {
         this.store.dispatch(gamePlayerBid(playerID));
@@ -86,9 +85,18 @@ export default class WebsocketManager {
         allies.push(parts[i]);
       }
       this.store.dispatch(gameAlliesChosen(trumpSuit, allies));
+    } else if (msg.slice(0, 2) === 'ab') {
+      this.store.dispatch(gameBecomeAlly());
     } else if (msg[0] === 'n') {
-      const playerID = msg.slice(1);
-      this.store.dispatch(gameNextPlayer(playerID));
+      const parts = msg.slice(1).split(',');
+      const playerID = parts[0];
+      let requiredSuit = null;
+
+      if (parts.length === 2) {
+        requiredSuit = parts[1];
+      }
+
+      this.store.dispatch(gameNextPlayer(playerID, requiredSuit));
     } else if (msg[0] === 'p') {
       const parts = msg.slice(1).split(',');
       const playerID = parts[0];
@@ -98,7 +106,6 @@ export default class WebsocketManager {
       const winnerPlayerID = msg.slice(1);
       this.store.dispatch(gameRoundOver(winnerPlayerID));
     } else if (msg[0] === 'g') {
-      //`g{napoleon_score_delta},{player_score_delta},{napoleon_bet},{combined_napoleon_score}(,{ally})*`
       const parts = msg.slice(1).split(',');
       const [
         napoleonScoreDelta,
@@ -139,7 +146,7 @@ export default class WebsocketManager {
   }
 
   bid(bid) {
-    if (bid) {
+    if (bid !== undefined) {
       this.socket.send('b' + bid);
     } else {
       this.socket.send('b');
@@ -151,8 +158,8 @@ export default class WebsocketManager {
     this.socket.send('a' + trumpSuit + ',' + allies);
   }
 
-  playCard(card) {
-    this.socket.send('p' + card);
+  playCard(number, suit) {
+    this.socket.send('p' + number + suit);
   }
 }
 
