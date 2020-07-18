@@ -13,7 +13,7 @@ suit = H|D|C|S
 These commands are handled in `session.rs`.
 
 ### Joined Room
-`e{key}(,{username},{session_id})+`
+`e{key},{host_id}(,{username},{session_id})+`
 
 ### NextBidder
 `bn{player_id}`
@@ -25,7 +25,7 @@ These commands are handled in `session.rs`.
 `j{username},{player_id}`
 
 ### NoBids
-`bn`
+`nb`
 
 ### BiddingOver
 `bo{bid},{napoleon_id}`
@@ -37,10 +37,11 @@ These commands are handled in `session.rs`.
 `ab`
 
 ### NextPlayer
-`n{player_id}`
+`n{player_id}{,card_suit}?`
+If the next player must play a certain suit it is added at the end.
 
 ### GameStarted
-`s{player_id}(,{player_id})*`
+`s{player_id}(,{player_id})*\n{JSON ENCODED GAME SETTINGS}`
 
 ### PlayerHand
 `h({card_number}{card_suit}(,{card_number}{card_suit})*)?`

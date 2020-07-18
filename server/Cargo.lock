@@ -733,6 +733,7 @@ name = "game"
 version = "0.1.0"
 dependencies = [
  "rand",
+ "serde",
 ]
 
 [[package]]
@@ -1662,4 +1663,5 @@ dependencies = [
  "actix-web-actors",
  "game",
  "rand",
+ "serde_json",
 ]

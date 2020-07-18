@@ -99,11 +99,16 @@ impl Handler<RoomEvent> for Session {
     fn handle(&mut self, event: RoomEvent, ctx: &mut Self::Context) {
         use RoomEvent as E;
         let message = match event {
-            E::JoinedRoom { key, address, players } => {
+            E::JoinedRoom {
+                key,
+                host,
+                address,
+                players,
+            } => {
                 self.room = Some(address);
-                let mut s = format!("e{}", key);
+                let mut s = format!("e{},{}", key, host);
                 for (username, session_id) in players {
-                    s.push_str(format!(",{},{}", username, session_id));
+                    s.push_str(&format!(",{},{}", username, session_id));
                 }
                 s
             }
@@ -119,27 +124,40 @@ impl Handler<RoomEvent> for Session {
                 player_id,
                 username,
             } => format!("j{},{}", username, player_id),
-            E::NoBids => format!("bn"),
+            E::NoBids => format!("nb"),
             E::BiddingOver { bid, napoleon_id } => format!("bo{},{}", bid, napoleon_id),
             E::AlliesChosen { allies, trump_suit } => {
                 let mut output = String::from("ac");
                 output.push(trump_suit.to_char());
                 for ally in allies {
                     output.push(',');
-                    output.push_str(&format!("{}", ally));
+                    output.push_str(&format!("{},{}", ally.number, ally.suit.to_char()));
                 }
 
                 output
             }
             E::BecomeAlly => format!("ab"),
-            E::NextPlayer { player_id } => format!("n{}", player_id),
-            E::GameStarted { player_order, .. } => format!(
-                "s{}",
+            E::NextPlayer {
+                player_id,
+                required_suit,
+            } => {
+                if let Some(suit) = required_suit {
+                    format!("n{},{}", player_id, suit.to_char())
+                } else {
+                    format!("n{}", player_id)
+                }
+            }
+            E::GameStarted {
+                player_order,
+                game_settings,
+            } => format!(
+                "s{}\n{}",
                 player_order
                     .into_iter()
                     .map(|id| format!("{}", id))
                     .collect::<Vec<_>>()
-                    .join(",")
+                    .join(","),
+                serde_json::to_string(&game_settings).expect("Serialization failed"),
             ),
             E::PlayerHand { hand } => format!(
                 "h{}",
@@ -151,13 +169,20 @@ impl Handler<RoomEvent> for Session {
             E::CardPlayed { player_id, card } => {
                 format!("p{},{}{}", player_id, card.number, card.suit.to_char())
             }
-            E::RoundOver { winner } => {
-                format!("r{}", winner)
-            }
-            E::GameOver { allies, napoleon_score_delta, player_score_delta, napoleon_bet, combined_napoleon_score } => {
-                let mut s = format!("g{},{},{},{}", napoleon_score_delta, player_score_delta, napoleon_bet, combined_napoleon_score);
+            E::RoundOver { winner } => format!("r{}", winner),
+            E::GameOver {
+                allies,
+                napoleon_score_delta,
+                player_score_delta,
+                napoleon_bet,
+                combined_napoleon_score,
+            } => {
+                let mut s = format!(
+                    "g{},{},{},{}",
+                    napoleon_score_delta, player_score_delta, napoleon_bet, combined_napoleon_score
+                );
                 for ally in allies {
-                    s.push_str(format!(",{}", ally));
+                    s.push_str(&format!(",{}", ally));
                 }
                 s
             }

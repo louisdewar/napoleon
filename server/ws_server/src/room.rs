@@ -10,6 +10,7 @@ pub enum RoomEvent {
     /// Sent to the player who joins a room (sent in game_server)
     JoinedRoom {
         key: String,
+        host: usize,
         address: Addr<Room>,
         players: Vec<(String, usize)>,
     },
@@ -48,6 +49,7 @@ pub enum RoomEvent {
     },
     NextPlayer {
         player_id: usize,
+        required_suit: Option<Suit>,
     },
     RoundOver {
         winner: usize,
@@ -118,7 +120,14 @@ impl Room {
         }
     }
 
-    fn join(&mut self, session_id: usize, username: String, session: Recipient<RoomEvent>) {
+    fn join(
+        &mut self,
+        session_id: usize,
+        username: String,
+        session: Recipient<RoomEvent>,
+        room_key: String,
+        room_addr: Addr<Room>,
+    ) {
         self.broadcast(RoomEvent::PlayerJoined {
             player_id: session_id,
             username: username.clone(),
@@ -127,13 +136,18 @@ impl Room {
             session_id,
             Occupant {
                 username,
-                recipient: session,
+                recipient: session.clone(),
             },
         );
-        let _ = msg.recipient.do_send(super::RoomEvent::JoinedRoom {
-            address: msg.room_addr,
-            key: msg.room_key,
-            players: self.player.iter().map(|(session_id, occ)| (occ.username, session_id)).collect(),
+        let _ = session.do_send(super::RoomEvent::JoinedRoom {
+            address: room_addr,
+            key: room_key,
+            host: self.host,
+            players: self
+                .players
+                .iter()
+                .map(|(session_id, occ)| (occ.username.clone(), *session_id))
+                .collect(),
         });
     }
 
@@ -191,7 +205,7 @@ impl Room {
                                     player_id: id_map[player_id],
                                 });
                             }
-                            BiddingFinished { mut napoleon } => {
+                            BiddingFinished { napoleon } => {
                                 let napoleon_id = id_map[napoleon.player_id];
                                 self.broadcast(RoomEvent::BiddingOver {
                                     bid: napoleon.bid,
@@ -243,7 +257,7 @@ impl Room {
                         AlliesChosen { allies } => {
                             self.broadcast(RoomEvent::AlliesChosen {
                                 allies: ally_cards,
-                                trump_suit,
+                                trump_suit: trump_suit.clone(),
                             });
 
                             for ally in allies {
@@ -254,6 +268,7 @@ impl Room {
                             // next_player
                             self.broadcast(RoomEvent::NextPlayer {
                                 player_id: session_id,
+                                required_suit: Some(trump_suit),
                             });
                         }
                     },
@@ -271,7 +286,6 @@ impl Room {
     }
 
     fn play_card(&mut self, session_id: usize, card: Card) {
-        use PlayingError::*;
         use PlayingEvent::*;
 
         if let RoomState::InGame {
@@ -282,9 +296,13 @@ impl Room {
             if let Some(player_id) = id_map.iter().position(|id| session_id == *id) {
                 match game.play_card(player_id, card) {
                     Ok(event) => match event {
-                        NextPlayer { player_id } => {
+                        NextPlayer {
+                            player_id,
+                            required_suit,
+                        } => {
                             self.broadcast(RoomEvent::NextPlayer {
                                 player_id: id_map[player_id],
+                                required_suit: Some(required_suit),
                             });
                         }
                         RoundEnded {
@@ -297,6 +315,7 @@ impl Room {
 
                             self.broadcast(RoomEvent::NextPlayer {
                                 player_id: id_map[next_player],
+                                required_suit: None,
                             });
                         }
                         GameEnded {

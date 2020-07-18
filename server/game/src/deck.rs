@@ -188,19 +188,6 @@ impl Deck {
     }
 }
 
-impl std::fmt::Display for Suit {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        use Suit::*;
-
-        match self {
-            Hearts => write!(fmt, "♥"),
-            Diamonds => write!(fmt, "♦"),
-            Spades => write!(fmt, "♠"),
-            Clubs => write!(fmt, "♣"),
-        }
-    }
-}
-
 impl std::fmt::Display for Number {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         use Number::*;
@@ -220,29 +207,5 @@ impl std::fmt::Display for Number {
             King => write!(fmt, "K"),
             Ace => write!(fmt, "A"),
         }
-    }
-}
-
-impl std::fmt::Display for Card {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        write!(fmt, "{}{}", self.number, self.suit)
-    }
-}
-
-impl std::fmt::Display for Deck {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        write!(fmt, "[")?;
-
-        let mut cards = self.inner.iter();
-
-        if let Some(card) = cards.next() {
-            write!(fmt, "{}", card)?;
-        }
-
-        for card in cards {
-            write!(fmt, ", {}", card)?;
-        }
-
-        write!(fmt, "]")
     }
 }
