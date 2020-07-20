@@ -8,6 +8,8 @@ import store from './state/store';
 
 import WebsocketManager from './state/websocket_manager';
 
+import './fonts.css';
+
 new WebsocketManager('ws://localhost:3001/ws/', store);
 
 ReactDOM.render(

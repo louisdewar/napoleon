@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
+import './Landing.css';
 
 export default function Landing() {
   const [roomCode, setRoomCode] = useState('');
@@ -22,27 +23,42 @@ export default function Landing() {
     [websocket, username]
   );
 
+  let room = username? "room show" : "room hidden";
+  
   return (
-    <div className="landing">
-      <input
-        placeholder="Username"
-        type="text"
-        value={username}
-        onChange={event => setUsername(event.target.value)}
-      />
-      <form onSubmit={joinRoom}>
+    <div className="landing-wrapper">
+      <div className="landing">
+        <h2>Enter Username:</h2>
         <input
-          placeholder="Room Key"
+          placeholder="Username"
           type="text"
-          value={roomCode}
-          onChange={event => setRoomCode(event.target.value)}
+          value={username}
+          onChange={event =>  setUsername(event.target.value)}
         />
-        <input type="submit" value="Join Room" />
-      </form>
+        <div className={room}>
+          <hr></hr>
+          <h2>Join Room:</h2> 
+          <form className="join-room"onSubmit={joinRoom}>
+            <input
+              placeholder="Room Key"
+              type="text"
+              value={roomCode}
+              onChange={event => setRoomCode(event.target.value)}
+              maxLength="15"
+            />
+            <input type="submit" value="Join" />
+          </form>
 
-      <form onSubmit={createRoom}>
-        <input type="submit" value="Create Room" />
-      </form>
+          <h3 className="or-hr">or</h3>
+          <form className="create-room" onSubmit={createRoom}>
+            <input 
+              type="submit" 
+              value="Create Room"
+              maxLength="5"
+            />
+          </form>  
+        </div>
+      </div>
     </div>
   );
 }
