@@ -1,5 +1,7 @@
 import React from 'react';
 
+import './Lobby.css';
+
 export default function Lobby({ userID, room, socket }) {
   const host = room.host;
 
@@ -7,13 +9,13 @@ export default function Lobby({ userID, room, socket }) {
   if (userID === host) {
     content = (
       <>
-        <p>You are the host, you can start the game whenever you want.</p>
-        <button onClick={() => socket.startGame()}>Start game</button>
+        <p className="host-p">You are the host, you can start the game whenever you want.</p>
+        <button className="start-btn" onClick={() => socket.startGame()}>Start game</button>
       </>
     );
   } else {
     content = (
-      <p>
+      <p className="user-p">
         {room.users[host].username} is the current host, we are waiting for them
         to start the game
       </p>
@@ -21,9 +23,11 @@ export default function Lobby({ userID, room, socket }) {
   }
 
   return (
-    <div className="lobby">
-      <h1>In lobby of room {room.key}</h1>
-      {content}
+    <div className="lobby-wrapper">
+      <div className="lobby">
+        <h1>In lobby of room <span className="room-key">{room.key}</span></h1>
+        {content}
+      </div>
     </div>
   );
 }
