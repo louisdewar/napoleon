@@ -1,0 +1,37 @@
+.card {
+  position: relative;
+  font-family: Quicksand-Regular;
+  color: #E8E8E8;
+  width: 160px;
+  height: 227px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #5A4040;
+  box-sizing: border-box;
+  border-radius: 14px;
+}
+
+.card.red {
+  color: #E74C3C;
+}
+
+.number {
+  position: absolute;
+  font-size: 56px;
+  left: 50%;
+  bottom: 50%;
+  transform: translate(-50%, 25%);
+}
+
+.suitUpper {
+  position: absolute;
+  width: 30px;
+  left: 10px;
+  top: 10px;
+}
+
+.suitLower {
+    position: absolute;
+    width: 30px;
+    right: 10px;
+    bottom: 10px;
+  }
