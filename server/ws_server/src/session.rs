@@ -3,11 +3,14 @@ use crate::{GameServer, Room, RoomEvent};
 use actix::prelude::*;
 use actix_web_actors::ws;
 
+use slog::{error, info, o, warn, Logger};
+
 #[derive(Message)]
 #[rtype("()")]
 pub struct WebsocketMessage {
     pub content: String,
     pub session_id: usize,
+    pub logger: Logger,
 }
 
 #[derive(Message)]
@@ -20,14 +23,16 @@ pub struct Session {
     id: usize,
     room: Option<Addr<Room>>,
     game_server: Addr<GameServer>,
+    logger: slog::Logger,
 }
 
 impl Session {
-    pub fn new(game_server: Addr<GameServer>) -> Session {
+    pub fn new(game_server: Addr<GameServer>, logger: slog::Logger) -> Session {
         Session {
             id: 0,
             game_server,
             room: None,
+            logger,
         }
     }
 }
@@ -46,7 +51,11 @@ impl Actor for Session {
             .then(|res, act, ctx| {
                 match res {
                     Ok(session_id) => {
+                        let logger = act.logger.new(o!("session_id" => session_id));
+                        act.logger = logger;
                         act.id = session_id;
+
+                        info!(act.logger, "Session assigned ID");
                         ctx.text(format!("c{}", session_id));
                     }
                     _ => ctx.stop(),
@@ -59,18 +68,22 @@ impl Actor for Session {
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Session {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        println!("WS: {:?}", msg);
-
-        assert_ne!(self.id, 0);
+        if self.id == 0 {
+            error!(self.logger, "ID was 0 but received message {:?}", msg);
+            return;
+        }
 
         match msg {
             Ok(ws::Message::Ping(msg)) => {
                 ctx.pong(&msg);
             }
+            // We don't send pings so we should receive these
+            Ok(ws::Message::Pong(_msg)) => {}
             Ok(ws::Message::Text(text)) => {
                 let message = WebsocketMessage {
                     content: text,
                     session_id: self.id,
+                    logger: self.logger.clone(),
                 };
 
                 if let Some(room) = &self.room {
@@ -79,14 +92,20 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Session {
                     self.game_server.do_send(message);
                 }
             }
-            Ok(ws::Message::Binary(_)) => {}
+            Ok(ws::Message::Binary(_)) => warn!(self.logger, "Receieved binary message"),
             Ok(ws::Message::Close(reason)) => {
                 // TODO: Tell room + game server to disconnect
+                // ^^ this should be handled as a lifecycle method so that all the ways that this
+                // actor might stop will all trigger a message to the server to delete the user.
+                info!(self.logger, "Session closed");
                 ctx.close(reason);
                 ctx.stop();
             }
-            _ => {
-                dbg!("stop?");
+            Ok(ws::Message::Continuation(_)) => warn!(self.logger, "Received continuation message"),
+            Ok(ws::Message::Nop) => {}
+            Err(_) => {
+                warn!(self.logger, "Got error instead of message stopping actor");
+                ctx.stop();
                 return;
             }
         }

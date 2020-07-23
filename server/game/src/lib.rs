@@ -6,7 +6,7 @@ use serde::Serialize;
 
 #[derive(Clone)]
 pub struct Napoleon {
-    pub bid: usize,
+    pub bid: u32,
     pub player_id: usize,
 }
 
@@ -24,6 +24,7 @@ enum GameState {
         trump_suit: Suit,
         current_player: usize,
         played_cards: Vec<Card>,
+        required_suit: Option<Suit>,
     },
 }
 
@@ -33,8 +34,9 @@ pub enum BiddingEvent {
 }
 
 pub enum BiddingError {
-    InvalidRange,
-    NotCurrentPlayer,
+    BidTooLow { min: u32 },
+    BidTooHigh { max: u32 },
+    NotCurrentPlayer { current_player: usize },
     InvalidGameState,
     NoBids,
 }
@@ -44,7 +46,8 @@ pub enum PostBiddingEvent {
 }
 
 pub enum PostBiddingError {
-    NotCurrentPlayer,
+    NotCurrentPlayer { current_player: usize },
+    IncorrectAllyCount { expected: usize, received: usize },
     InvalidGameState,
 }
 
@@ -58,20 +61,23 @@ pub enum PlayingEvent {
         next_player: usize,
     },
     GameEnded {
-        combined_napoleon_score: usize,
+        combined_napoleon_score: u32,
         napoleon: Napoleon,
         allies: Vec<usize>,
     },
 }
 
 pub enum PlayingError {
+    NotCurrentPlayer { current_player: usize },
     InvalidGameState,
+    InvalidSuit,
+    CardNotInHand,
 }
 
 pub struct Game {
     players: usize,
     hands: Vec<Deck>,
-    score: Vec<usize>,
+    score: Vec<u32>,
     state: GameState,
     settings: GameSettings,
 }
@@ -79,6 +85,7 @@ pub struct Game {
 #[derive(Clone, Serialize)]
 pub struct GameSettings {
     pub ally_count: usize,
+    pub hand_size: u32,
 }
 
 impl Game {
@@ -90,7 +97,7 @@ impl Game {
         for _ in 0..players {
             let mut hand = Deck::new_empty();
 
-            for _ in 0..5 {
+            for _ in 0..settings.hand_size {
                 hand.push(deck.pop().expect("Deck should have enough elements"));
             }
 
@@ -117,46 +124,43 @@ impl Game {
         &self.hands
     }
 
-    pub fn get_score(&self) -> &[usize] {
+    pub fn get_score(&self) -> &[u32] {
         &self.score
     }
 
     pub fn bid(
         &mut self,
         player_id: usize,
-        bet: Option<usize>, // TODO: rename bet as bid
+        bid: Option<u32>,
     ) -> Result<BiddingEvent, BiddingError> {
         if let GameState::Bidding {
             current_player,
             current_napoleon,
         } = &mut self.state
         {
-            assert_eq!(
-                *current_player, player_id,
-                "{} tried to bet when it was {}'s turn",
-                player_id, current_player
-            );
+            if *current_player != player_id {
+                return Err(BiddingError::NotCurrentPlayer {
+                    current_player: *current_player,
+                });
+            }
 
-            match bet {
-                Some(bet) => {
-                    assert!(
-                        bet <= 5,
-                        "Tried to bet {} which was higher than trick count ({})",
-                        bet,
-                        5
-                    );
-
-                    if let Some(napoleon) = current_napoleon {
-                        assert!(
-                            bet > napoleon.bid,
-                            "Tried to bet lower than or equal to current"
-                        );
+            match bid {
+                Some(bid) => {
+                    if bid > self.settings.hand_size {
+                        return Err(BiddingError::BidTooHigh {
+                            max: self.settings.hand_size,
+                        });
                     }
 
-                    *current_napoleon = Some(Napoleon {
-                        player_id,
-                        bid: bet,
-                    });
+                    if let Some(napoleon) = current_napoleon {
+                        if bid <= napoleon.bid {
+                            return Err(BiddingError::BidTooLow {
+                                min: napoleon.bid + 1,
+                            });
+                        }
+                    }
+
+                    *current_napoleon = Some(Napoleon { player_id, bid });
                 }
                 None => {}
             }
@@ -181,11 +185,9 @@ impl Game {
             });
         } else {
             return Err(BiddingError::InvalidGameState);
-            // panic!("Tried to bet even though game state was not betting");
         }
     }
 
-    // TODO: Error handling
     pub fn pick_allies(
         &mut self,
         player_id: usize,
@@ -193,22 +195,28 @@ impl Game {
         trump_suit: Suit,
     ) -> Result<PostBiddingEvent, PostBiddingError> {
         if let GameState::PostBidding { napoleon } = &self.state {
-            assert_eq!(
-                napoleon.player_id, player_id,
-                "Non-napoleon tried to pick allies"
-            );
+            if napoleon.player_id != player_id {
+                return Err(PostBiddingError::NotCurrentPlayer {
+                    current_player: napoleon.player_id,
+                });
+            }
 
-            assert_eq!(
-                ally_cards.len(),
-                self.settings.ally_count,
-                "Napoleon tried to pick incorrect number of allies"
-            );
+            if ally_cards.len() != self.settings.ally_count {
+                return Err(PostBiddingError::IncorrectAllyCount {
+                    expected: self.settings.ally_count,
+                    received: ally_cards.len(),
+                });
+            }
 
             let mut allies = Vec::new();
 
-            // TODO: Napoleon can't pick themselves as an ally. Not an error just don't add
-            // napoleon to allies vector
             'outer: for (id, hand) in self.hands.iter().enumerate() {
+                // Napoleon can't pick themselves as an ally. Not an error just skip adding
+                // napoleon to allies vector
+                if id == napoleon.player_id {
+                    continue 'outer;
+                }
+
                 for ally_card in &ally_cards {
                     if hand.contains(ally_card) {
                         allies.push(id);
@@ -218,10 +226,10 @@ impl Game {
                 }
             }
 
-            // TODO: napeolon must start game with a card from the trump suit
             self.state = GameState::Playing {
                 napoleon: napoleon.clone(),
                 allies: allies.clone(),
+                required_suit: Some(trump_suit.clone()),
                 trump_suit,
                 current_player: napoleon.player_id,
                 played_cards: Vec::with_capacity(self.players),
@@ -230,7 +238,6 @@ impl Game {
             Ok(PostBiddingEvent::AlliesChosen { allies })
         } else {
             Err(PostBiddingError::InvalidGameState)
-            //            panic!("Tried to pick allies when game state wasn't PostBidding");
         }
     }
 
@@ -245,28 +252,40 @@ impl Game {
             played_cards,
             trump_suit,
             napoleon,
+            required_suit,
             ..
         } = &mut self.state
         {
-            assert_eq!(
-                player_id, *current_player,
-                "Player tried to play a card in another's turn"
-            );
-            assert!(
-                self.hands[player_id].remove(&card).is_some(),
-                "Player tried to play card that they did not have"
-            );
+            if player_id != *current_player {
+                return Err(PlayingError::NotCurrentPlayer {
+                    current_player: *current_player,
+                });
+            }
 
-            if let Some(first_card) = played_cards.first() {
-                assert!(
-                    card.suit == first_card.suit
-                        || !self.hands[player_id].contains_suit(&first_card.suit)
-                );
+            if self.hands[player_id].remove(&card).is_some() {
+                return Err(PlayingError::CardNotInHand);
+            }
+
+            // Ensure that the required suit is played if they have a card of that suit and if
+            // there is in fact a required suit (there isn't for the first player of a round except
+            // for the first round)
+            if let Some(required_suit) = required_suit {
+                if &card.suit != required_suit && self.hands[player_id].contains_suit(required_suit)
+                {
+                    return Err(PlayingError::InvalidSuit);
+                }
+            } else {
+                // If there wasn't a required suit then all next cards should have the same suit as
+                // the current (since it's the first of a round)
+                *required_suit = Some(card.suit.clone());
             }
 
             played_cards.push(card);
 
             if played_cards.len() == self.players {
+                // TODO: Even though deck supports multiple packs of cards, scoring does not.
+                // It is unclear what to do when two players both have the exact same card that is
+                // the highest number + trump suit.
                 let (winner, _card) = played_cards
                     .iter()
                     .enumerate()
@@ -298,13 +317,15 @@ impl Game {
                                     None
                                 }
                             })
-                            .sum::<usize>();
+                            .sum::<u32>();
                     return Ok(PlayingEvent::GameEnded {
                         combined_napoleon_score,
                         napoleon: napoleon.clone(),
                         allies: allies.clone(),
                     });
                 } else {
+                    // Now that the round has ended the next player has no required_suit
+                    *required_suit = None;
                     return Ok(PlayingEvent::RoundEnded {
                         next_player: winner,
                         winner,
@@ -314,11 +335,11 @@ impl Game {
                 *current_player = (*current_player + 1) % self.players;
                 return Ok(PlayingEvent::NextPlayer {
                     player_id: *current_player,
-                    required_suit: played_cards.first().unwrap().suit.clone(),
+                    // Can never fail since earlier if required_suit was None is was set to Some.
+                    required_suit: required_suit.clone().unwrap(),
                 });
             }
         } else {
-            //            panic!("Tried to play card when game state wasn't Playing");
             Err(PlayingError::InvalidGameState)
         }
     }
