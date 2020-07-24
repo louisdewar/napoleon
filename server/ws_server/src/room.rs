@@ -2,6 +2,8 @@ use actix::prelude::*;
 use game::*;
 use std::collections::HashMap;
 
+use slog::{debug, error, trace, warn, Logger};
+
 mod message_handling;
 
 #[derive(Message, Clone)]
@@ -28,14 +30,14 @@ pub enum RoomEvent {
     },
     PlayerBid {
         player_id: usize,
-        bid: Option<usize>,
+        bid: Option<u32>,
     },
     NextBidder {
         player_id: usize,
     },
     BiddingOver {
         napoleon_id: usize,
-        bid: usize,
+        bid: u32,
     },
     NoBids,
     BecomeAlly,
@@ -58,8 +60,8 @@ pub enum RoomEvent {
         allies: Vec<usize>,
         napoleon_score_delta: i32,
         player_score_delta: i32,
-        napoleon_bet: usize,
-        combined_napoleon_score: usize,
+        napoleon_bet: u32,
+        combined_napoleon_score: u32,
     },
 }
 
@@ -82,10 +84,16 @@ pub struct Room {
     players: HashMap<usize, Occupant>,
     state: RoomState,
     host: usize,
+    logger: Logger,
 }
 
 impl Room {
-    pub fn new(session_id: usize, username: String, session: Recipient<RoomEvent>) -> Room {
+    pub fn new(
+        session_id: usize,
+        username: String,
+        session: Recipient<RoomEvent>,
+        logger: Logger,
+    ) -> Room {
         let mut players = HashMap::new();
         players.insert(
             session_id,
@@ -99,6 +107,7 @@ impl Room {
             players,
             state: RoomState::Lobby {},
             host: session_id,
+            logger,
         }
     }
 
@@ -110,7 +119,7 @@ impl Room {
         if let Some(Occupant { recipient, .. }) = self.players.get(session_id) {
             Self::send_recipient_event(recipient, event);
         } else {
-            // TODO: log error
+            debug!(self.logger, "Tried to send event to id which was no in the room"; "session_id" => session_id);
         }
     }
 
@@ -153,19 +162,28 @@ impl Room {
 
     fn start_game(&mut self, session_id: usize, settings: GameSettings) {
         if let RoomState::Lobby {} = &self.state {
-            assert_eq!(session_id, self.host, "Non-host tried to start game");
+            if session_id != self.host {
+                warn!(self.logger, "Non-host tried to start game"; "session_id" => session_id, "host_id" => self.host);
+                return;
+            }
             let id_map = self.players.keys().cloned().collect();
 
             self.new_game(settings, id_map);
         } else {
-            panic!(
-                "Session {} tried to start game when the room state wasn't lobby",
-                session_id
+            warn!(
+                self.logger,
+                "Session tried to start game when the room state wasn't lobby";
+                "session_id" => session_id
             );
         }
     }
 
     fn new_game(&mut self, game_settings: GameSettings, id_map: Vec<usize>) {
+        if id_map.len() == 0 {
+            error!(self.logger, "Tried to start a game with 0 people");
+            return;
+        }
+
         let game = Game::new(id_map.len(), game_settings.clone());
         self.broadcast(RoomEvent::GameStarted {
             player_order: id_map.clone(),
@@ -180,10 +198,12 @@ impl Room {
             player_id: id_map[0],
         });
 
+        trace!(self.logger, "New game started"; "players" => id_map.len());
+
         self.state = RoomState::InGame { game, id_map };
     }
 
-    fn bid(&mut self, session_id: usize, bid: Option<usize>) {
+    fn bid(&mut self, session_id: usize, bid: Option<u32>) {
         use BiddingError::*;
         use BiddingEvent::*;
 
@@ -215,35 +235,58 @@ impl Room {
                         }
                     }
                     Err(error) => match error {
-                        InvalidGameState => {
-                            panic!(
-                                "Session {} tried to bet when game state wasn't bidding",
-                                session_id
-                            );
-                        }
-                        InvalidRange => todo!("error"),
+                        InvalidGameState => warn!(
+                            self.logger,
+                            "Session tried to bid when game state wasn't bidding";
+                            "session_id" => session_id
+                        ),
+                        BidTooLow { min } => warn!(
+                            self.logger,
+                            "Session tried to bid below the minimum";
+                            "session_id" => session_id,
+                            "minimum" => min,
+                            "bid" => bid
+                        ),
+                        BidTooHigh { max } => warn!(
+                            self.logger,
+                            "Session tried to bid above the maximum";
+                            "session_id" => session_id,
+                            "maximum" => max,
+                            "bid" => bid
+                        ),
                         NoBids => {
+                            trace!(self.logger, "No bids so starting a new game");
                             let settings = game.get_settings().clone();
                             let id_map = id_map.clone();
                             self.broadcast(RoomEvent::NoBids);
                             self.new_game(settings, id_map);
                         }
-                        NotCurrentPlayer => todo!("error"),
+                        NotCurrentPlayer { current_player } => warn!(
+                            self.logger,
+                            "Session tried to bid when they weren't the current bidder";
+                            "session_id" => session_id,
+                            "current_bidder" => current_player
+                        ),
                     },
                 }
             } else {
-                todo!("non player tried to bet (spectator)");
+                warn!(
+                    self.logger,
+                    "Non-player tried to bid (was spectator)";
+                    "session_id" => session_id
+                )
             }
         } else {
-            panic!(
-                "Session {} tried to bid when the room state wasn't in game",
-                session_id
+            warn!(
+                self.logger,
+                "Session tried to bid when the room state wasn't in game";
+                "session_id" => session_id
             );
         }
     }
 
     fn pick_allies(&mut self, session_id: usize, ally_cards: Vec<Card>, trump_suit: Suit) {
-        //        use PostBiddingError::*;
+        use PostBiddingError::*;
         use PostBiddingEvent::*;
 
         if let RoomState::InGame {
@@ -264,28 +307,52 @@ impl Room {
                                 self.send_event(&id_map[ally], RoomEvent::BecomeAlly);
                             }
 
-                            // Session_id here must be napoleon, todo: make AlliesChosen return
-                            // next_player
+                            // Session_id here must be napoleon
                             self.broadcast(RoomEvent::NextPlayer {
                                 player_id: session_id,
                                 required_suit: Some(trump_suit),
                             });
                         }
                     },
-                    Err(_error) => todo!("handle pick allies errors"),
+                    Err(error) => match error {
+                        NotCurrentPlayer { current_player } => warn!(
+                            self.logger,
+                            "Session tried to pick allies when they weren't the napoleon";
+                            "session_id" => session_id,
+                            "napoleon" => current_player,
+                        ),
+                        InvalidGameState => warn!(
+                            self.logger,
+                            "Session tried to pick allies when game state wasn't pick_allies";
+                            "session_id" => session_id
+                        ),
+                        IncorrectAllyCount { expected, received } => warn!(
+                            self.logger,
+                            "Session picked an incorrect number of allies";
+                            "session_id" => session_id,
+                            "expected" => expected,
+                            "received" => received,
+                        ),
+                    },
                 }
             } else {
-                todo!("non player tried to pick allies (spectator)");
+                warn!(
+                    self.logger,
+                    "Non player tried to pick allies (was spectator)";
+                    "session_id" => session_id
+                );
             }
         } else {
-            panic!(
-                "Session {} tried to pick allies when the room state wasn't in game",
-                session_id
+            warn!(
+                self.logger,
+                "Session tried to pick allies when the room state wasn't in game";
+                "session_id" => session_id
             );
         }
     }
 
     fn play_card(&mut self, session_id: usize, card: Card) {
+        use PlayingError::*;
         use PlayingEvent::*;
 
         if let RoomState::InGame {
@@ -294,62 +361,95 @@ impl Room {
         } = self.state
         {
             if let Some(player_id) = id_map.iter().position(|id| session_id == *id) {
-                match game.play_card(player_id, card) {
-                    Ok(event) => match event {
-                        NextPlayer {
-                            player_id,
-                            required_suit,
-                        } => {
-                            self.broadcast(RoomEvent::NextPlayer {
-                                player_id: id_map[player_id],
-                                required_suit: Some(required_suit),
-                            });
-                        }
-                        RoundEnded {
-                            winner,
-                            next_player,
-                        } => {
-                            self.broadcast(RoomEvent::RoundOver {
-                                winner: id_map[winner],
-                            });
+                match game.play_card(player_id, card.clone()) {
+                    Ok(event) => {
+                        self.broadcast(RoomEvent::CardPlayed {
+                            player_id: session_id,
+                            card,
+                        });
+                        match event {
+                            NextPlayer {
+                                player_id,
+                                required_suit,
+                            } => {
+                                self.broadcast(RoomEvent::NextPlayer {
+                                    player_id: id_map[player_id],
+                                    required_suit: Some(required_suit),
+                                });
+                            }
+                            RoundEnded {
+                                winner,
+                                next_player,
+                            } => {
+                                self.broadcast(RoomEvent::RoundOver {
+                                    winner: id_map[winner],
+                                });
 
-                            self.broadcast(RoomEvent::NextPlayer {
-                                player_id: id_map[next_player],
-                                required_suit: None,
-                            });
-                        }
-                        GameEnded {
-                            combined_napoleon_score,
-                            napoleon,
-                            allies,
-                        } => {
-                            // TODO: decide scoring
-                            // Also implement room wide score
-                            let (napoleon_score_delta, player_score_delta) =
-                                if napoleon.bid == combined_napoleon_score {
-                                    (15, -10)
-                                } else {
-                                    (-10, 15)
-                                };
-
-                            self.broadcast(RoomEvent::GameOver {
-                                napoleon_score_delta,
-                                player_score_delta,
-                                allies,
+                                self.broadcast(RoomEvent::NextPlayer {
+                                    player_id: id_map[next_player],
+                                    required_suit: None,
+                                });
+                            }
+                            GameEnded {
                                 combined_napoleon_score,
-                                napoleon_bet: napoleon.bid,
-                            });
+                                napoleon,
+                                allies,
+                            } => {
+                                // TODO: decide scoring
+                                // TODO: implement room wide score
+                                let (napoleon_score_delta, player_score_delta) =
+                                    if napoleon.bid == combined_napoleon_score {
+                                        (15, -10)
+                                    } else {
+                                        (-10, 15)
+                                    };
+
+                                self.broadcast(RoomEvent::GameOver {
+                                    napoleon_score_delta,
+                                    player_score_delta,
+                                    allies,
+                                    combined_napoleon_score,
+                                    napoleon_bet: napoleon.bid,
+                                });
+                            }
                         }
+                    }
+                    Err(error) => match error {
+                        InvalidGameState => warn!(
+                            self.logger,
+                            "Session tried to play card when game state wasn't in round";
+                            "session_id" => session_id
+                        ),
+                        NotCurrentPlayer { current_player } => warn!(
+                            self.logger,
+                            "Session tried to play card when they weren't the current player";
+                            "session_id" => session_id,
+                            "current_bidder" => current_player
+                        ),
+                        CardNotInHand => warn!(
+                            self.logger,
+                            "Session tried to play a card that they didn't have";
+                            "session_id" => session_id,
+                        ),
+                        InvalidSuit => warn!(
+                            self.logger,
+                            "Session tried to play a card of the wrong suit";
+                            "session_id" => session_id,
+                        ),
                     },
-                    Err(_error) => todo!("handle play card error"),
                 }
             } else {
-                todo!("non player tried to pick allies (spectator)");
+                warn!(
+                    self.logger,
+                    "Non player tried to pick allies (was spectator)";
+                    "session_id" => session_id
+                );
             }
         } else {
-            panic!(
-                "Session {} tried to play card when the room state wasn't in game",
-                session_id
+            warn!(
+                self.logger,
+                "Session tried to play card when the room state wasn't in game";
+                "session_id" => session_id
             );
         }
     }

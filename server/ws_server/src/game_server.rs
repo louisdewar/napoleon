@@ -2,23 +2,27 @@ use crate::{session::SessionStarted, Room, RoomEvent, WebsocketMessage};
 use actix::prelude::*;
 use std::collections::HashMap;
 
+use slog::{error, warn, Logger};
+
 pub struct GameServer {
     connected_sessions: HashMap<usize, Recipient<RoomEvent>>,
     rooms: HashMap<String, Addr<Room>>,
+    logger: Logger,
 }
 
 impl GameServer {
-    pub fn new() -> GameServer {
+    pub fn new(logger: Logger) -> GameServer {
         GameServer {
             connected_sessions: HashMap::new(),
             rooms: HashMap::new(),
+            logger,
         }
     }
 
     fn create_room(&mut self, session_id: usize, username: String) {
         use rand::{distributions::Alphanumeric, Rng};
         use std::collections::hash_map::Entry;
-        // TODO: Make random
+
         if let Some(recipient) = self.connected_sessions.get(&session_id) {
             let mut rng = rand::thread_rng();
 
@@ -29,8 +33,13 @@ impl GameServer {
                     .collect();
 
                 if let Entry::Vacant(entry) = self.rooms.entry(key.clone()) {
-                    let address =
-                        Room::new(session_id, username.clone(), recipient.clone()).start();
+                    let address = Room::new(
+                        session_id,
+                        username.clone(),
+                        recipient.clone(),
+                        self.logger.new(slog::o!("room_key" => key.clone())),
+                    )
+                    .start();
                     entry.insert(address.clone());
 
                     let _ = recipient.do_send(RoomEvent::JoinedRoom {
@@ -43,7 +52,11 @@ impl GameServer {
                 }
             }
         } else {
-            todo!("log internal server error");
+            error!(
+                self.logger,
+                "Session didn't exist when creating room";
+                "session_id" => session_id
+            );
         }
     }
 
@@ -59,7 +72,11 @@ impl GameServer {
                 });
             }
         } else {
-            todo!("log internal server error");
+            error!(
+                self.logger,
+                "Session didn't exist when creating room";
+                "session_id" => session_id
+            );
         }
     }
 
@@ -73,7 +90,6 @@ impl GameServer {
             }
 
             if let Entry::Vacant(entry) = self.connected_sessions.entry(id) {
-                println!("New recipient given id {}", id);
                 entry.insert(recipient);
 
                 return id;
@@ -107,7 +123,8 @@ impl Handler<WebsocketMessage> for GameServer {
         let first_char = if let Some(first_char) = message.next() {
             first_char
         } else {
-            todo!("log error and return");
+            warn!(ws_message.logger, "Empty message sent");
+            return;
         };
 
         match first_char {
@@ -122,7 +139,11 @@ impl Handler<WebsocketMessage> for GameServer {
 
                     self.join_room(session_id, username, &room_key);
                 } else {
-                    todo!("handle error")
+                    warn!(
+                        ws_message.logger,
+                        "Join room message was improperly formatted"
+                    );
+                    return;
                 }
             }
             _ => {}
