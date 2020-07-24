@@ -361,53 +361,59 @@ impl Room {
         } = self.state
         {
             if let Some(player_id) = id_map.iter().position(|id| session_id == *id) {
-                match game.play_card(player_id, card) {
-                    Ok(event) => match event {
-                        NextPlayer {
-                            player_id,
-                            required_suit,
-                        } => {
-                            self.broadcast(RoomEvent::NextPlayer {
-                                player_id: id_map[player_id],
-                                required_suit: Some(required_suit),
-                            });
-                        }
-                        RoundEnded {
-                            winner,
-                            next_player,
-                        } => {
-                            self.broadcast(RoomEvent::RoundOver {
-                                winner: id_map[winner],
-                            });
+                match game.play_card(player_id, card.clone()) {
+                    Ok(event) => {
+                        self.broadcast(RoomEvent::CardPlayed {
+                            player_id: session_id,
+                            card,
+                        });
+                        match event {
+                            NextPlayer {
+                                player_id,
+                                required_suit,
+                            } => {
+                                self.broadcast(RoomEvent::NextPlayer {
+                                    player_id: id_map[player_id],
+                                    required_suit: Some(required_suit),
+                                });
+                            }
+                            RoundEnded {
+                                winner,
+                                next_player,
+                            } => {
+                                self.broadcast(RoomEvent::RoundOver {
+                                    winner: id_map[winner],
+                                });
 
-                            self.broadcast(RoomEvent::NextPlayer {
-                                player_id: id_map[next_player],
-                                required_suit: None,
-                            });
-                        }
-                        GameEnded {
-                            combined_napoleon_score,
-                            napoleon,
-                            allies,
-                        } => {
-                            // TODO: decide scoring
-                            // TODO: implement room wide score
-                            let (napoleon_score_delta, player_score_delta) =
-                                if napoleon.bid == combined_napoleon_score {
-                                    (15, -10)
-                                } else {
-                                    (-10, 15)
-                                };
-
-                            self.broadcast(RoomEvent::GameOver {
-                                napoleon_score_delta,
-                                player_score_delta,
-                                allies,
+                                self.broadcast(RoomEvent::NextPlayer {
+                                    player_id: id_map[next_player],
+                                    required_suit: None,
+                                });
+                            }
+                            GameEnded {
                                 combined_napoleon_score,
-                                napoleon_bet: napoleon.bid,
-                            });
+                                napoleon,
+                                allies,
+                            } => {
+                                // TODO: decide scoring
+                                // TODO: implement room wide score
+                                let (napoleon_score_delta, player_score_delta) =
+                                    if napoleon.bid == combined_napoleon_score {
+                                        (15, -10)
+                                    } else {
+                                        (-10, 15)
+                                    };
+
+                                self.broadcast(RoomEvent::GameOver {
+                                    napoleon_score_delta,
+                                    player_score_delta,
+                                    allies,
+                                    combined_napoleon_score,
+                                    napoleon_bet: napoleon.bid,
+                                });
+                            }
                         }
-                    },
+                    }
                     Err(error) => match error {
                         InvalidGameState => warn!(
                             self.logger,
