@@ -38,6 +38,12 @@ function gameReducer(state = {}, action, rootState) {
     newState.gameState = 'ROUND';
     newState.playerID = action.playerID;
     newState.requiredSuit = action.requiredSuit;
+
+    if (newState.winner) {
+      newState.cardsPlayed = {};
+      newState.winner = null;
+    }
+
     return newState;
   case 'GAME_CARD_PLAYED': {
     if (rootState.userID === action.playerID) {
@@ -109,7 +115,7 @@ function mainReducer(state = {}, action) {
     if (action.type.startsWith('GAME_')) {
       if (state.room) {
         newState.room = { ...newState.room };
-        newState.room.game = gameReducer(state.room.game, action);
+        newState.room.game = gameReducer(state.room.game, action, newState);
       }
     }
 

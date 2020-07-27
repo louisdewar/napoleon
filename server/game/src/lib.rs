@@ -262,7 +262,7 @@ impl Game {
                 });
             }
 
-            if self.hands[player_id].remove(&card).is_some() {
+            if self.hands[player_id].remove(&card).is_none() {
                 return Err(PlayingError::CardNotInHand);
             }
 
@@ -326,6 +326,8 @@ impl Game {
                 } else {
                     // Now that the round has ended the next player has no required_suit
                     *required_suit = None;
+                    *current_player = winner;
+
                     return Ok(PlayingEvent::RoundEnded {
                         next_player: winner,
                         winner,

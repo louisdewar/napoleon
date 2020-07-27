@@ -351,7 +351,7 @@ impl Room {
         }
     }
 
-    fn play_card(&mut self, session_id: usize, card: Card) {
+    fn play_card(&mut self, session_id: usize, card: Card, context: &mut Context<Self>) {
         use PlayingError::*;
         use PlayingEvent::*;
 
@@ -381,13 +381,16 @@ impl Room {
                                 winner,
                                 next_player,
                             } => {
+                                let next_player_id = id_map[next_player];
+
                                 self.broadcast(RoomEvent::RoundOver {
                                     winner: id_map[winner],
                                 });
-
-                                self.broadcast(RoomEvent::NextPlayer {
-                                    player_id: id_map[next_player],
-                                    required_suit: None,
+                                context.run_later(std::time::Duration::new(5, 0), move |room, _context| {
+                                    room.broadcast(RoomEvent::NextPlayer {
+                                        player_id: next_player_id,
+                                        required_suit: None,
+                                    });
                                 });
                             }
                             GameEnded {
@@ -424,7 +427,8 @@ impl Room {
                             self.logger,
                             "Session tried to play card when they weren't the current player";
                             "session_id" => session_id,
-                            "current_bidder" => current_player
+                            "player_id" => player_id,
+                            "current_player" => current_player
                         ),
                         CardNotInHand => warn!(
                             self.logger,

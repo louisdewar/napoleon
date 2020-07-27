@@ -2,7 +2,6 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import Landing from './components/Landing';
 import Room from './components/Room';
-import Card from './components/Card';
 
 function App() {
   const room = useSelector(state => state.room);
@@ -16,4 +15,3 @@ function App() {
 }
 
 export default App;
-

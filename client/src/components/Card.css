@@ -4,14 +4,27 @@
   color: #E8E8E8;
   width: 160px;
   height: 227px;
+  margin: 10px;
   background: rgba(0, 0, 0, 0.85);
   border: 1px solid #5A4040;
-  box-sizing: border-box;
   border-radius: 14px;
+  user-select: none;
+}
+
+.card.winner {
+  border: 2px solid #fac000;
 }
 
 .card.red {
   color: #E74C3C;
+}
+
+.card.disabled {
+  opacity: 0.6;
+}
+
+.card.clickable {
+  cursor: pointer;
 }
 
 .number {

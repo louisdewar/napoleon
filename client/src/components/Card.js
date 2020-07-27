@@ -1,4 +1,4 @@
-import React, {useState, useCallback} from 'react';
+import React from 'react';
 import classnames from 'classnames'; 
 
 import Heart from '../assets/images/heart.png';
@@ -8,7 +8,7 @@ import Spade from '../assets/images/spade.png';
 
 import './Card.css';
 
-export default function Card({ suit, number }) {
+export default function Card({ suit, number, disabled, onSelect, className }) {
   number = number === 'T'? '10' : number;
   let image;
   switch (suit) {
@@ -33,10 +33,12 @@ export default function Card({ suit, number }) {
   }
 
   return (
-    <div className={classnames('card', { red: suit === 'H' || suit === 'D' })}>
+    <div 
+        className={classnames('card', { red: suit === 'H' || suit === 'D', clickable: onSelect && !disabled, disabled }, className)}
+        onClick={!disabled? onSelect : undefined} >
       <span className="number">{number}</span>
-      <img className="suitUpper" src={image} />
-      <img className="suitLower" src={image} />
+      <img className="suitUpper" src={image} alt="" />
+      <img className="suitLower" src={image} alt="" />
     </div>
   );
 }

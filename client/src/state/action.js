@@ -23,7 +23,7 @@ export function playerJoined(username, userID) {
 }
 
 export function gamePlayerBid(playerID, bid) {
-  if (bid) {
+  if (bid !== undefined) {
     return { type: 'GAME_PLAYER_BID', playerID, bid };
   }
   return { type: 'GAME_PLAYER_BID_NOTHING', playerID, bid: 'NO_BID' };

@@ -1,3 +1,8 @@
+import Heart from './assets/images/heart.png';
+import Diamond from './assets/images/diamond.png';
+import Club from './assets/images/club.png';
+import Spade from './assets/images/spade.png';
+
 export const numbers = [
   '2',
   '3',
@@ -38,3 +43,10 @@ export const suitsMap = {
   C: 'Clubs',
   S: 'Spades',
 };
+
+export const suitsMapImage = {
+  'Hearts': Heart,
+  'Diamonds': Diamond,
+  'Clubs': Club,
+  'Spades': Spade,
+}

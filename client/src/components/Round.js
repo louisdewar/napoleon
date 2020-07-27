@@ -21,6 +21,13 @@ export default function Round({ userID, game, users, socket }) {
     }
   }, [game.hand, game.requiredSuit]);
 
+
+  const cardsPlayed = { ...game.cardsPlayed };
+
+  if (game.winner) {
+    cardsPlayed[game.winner] = {...cardsPlayed[game.winner], className: 'winner'};
+  }
+
   const playedCards = (
     <>
       <p>The cards played so far:</p>
@@ -28,9 +35,25 @@ export default function Round({ userID, game, users, socket }) {
     </>
   );
 
+  const winnerCardsPlayed = (
+    <>
+      <p>The cards played in this round:</p>
+      <Hand cards={Object.values(cardsPlayed)} />
+    </>
+  )
+
   if (userID === game.playerID) {
-    const onClick = (number, suit) => socket.playCard(number, suit);
-    console.log(disabledCards);
+    const onClick = id => socket.playCard(game.hand[id].number, game.hand[id].suit);
+
+    if (game.winner) {
+      return (
+        <>
+          <p>{users[game.winner].username} won the round!</p>
+          {winnerCardsPlayed}
+        </>
+      );
+    }
+
     return (
       <>
         <p>Choose a card to play:</p>
