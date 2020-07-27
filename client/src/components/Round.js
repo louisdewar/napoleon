@@ -28,10 +28,15 @@ export default function Round({ userID, game, users, socket }) {
     cardsPlayed[game.winner] = {...cardsPlayed[game.winner], className: 'winner'};
   }
 
+  for (const playerID of Object.keys(cardsPlayed)){
+    cardsPlayed[playerID] = {...cardsPlayed[playerID], username: users[playerID].username};
+  }
+  
+
   const playedCards = (
     <>
       <p>The cards played so far:</p>
-      <Hand cards={Object.values(game.cardsPlayed)} />
+      <Hand cards={Object.values(cardsPlayed)} />
     </>
   );
 

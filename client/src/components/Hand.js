@@ -15,6 +15,7 @@ export default function Hand({ cards, onSelect, disabledCards = [] }) {
           disabled={disabledCards.indexOf(i) !== -1}
           onSelect={onSelect? onSelect.bind(null, i) : undefined}
           className={card.className}
+          username={card.username}
         />
       ))}
     </div>

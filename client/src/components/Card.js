@@ -8,7 +8,7 @@ import Spade from '../assets/images/spade.png';
 
 import './Card.css';
 
-export default function Card({ suit, number, disabled, onSelect, className }) {
+export default function Card({ suit, number, disabled, onSelect, className, username }) {
   number = number === 'T'? '10' : number;
   let image;
   switch (suit) {
@@ -33,12 +33,15 @@ export default function Card({ suit, number, disabled, onSelect, className }) {
   }
 
   return (
-    <div 
-        className={classnames('card', { red: suit === 'H' || suit === 'D', clickable: onSelect && !disabled, disabled }, className)}
-        onClick={!disabled? onSelect : undefined} >
-      <span className="number">{number}</span>
-      <img className="suitUpper" src={image} alt="" />
-      <img className="suitLower" src={image} alt="" />
-    </div>
+    <>
+      <div 
+          className={classnames('card', { red: suit === 'H' || suit === 'D', clickable: onSelect && !disabled, disabled }, className)}
+          onClick={!disabled? onSelect : undefined} >
+        <span className="number">{number}</span>
+        <img className="suitUpper" src={image} alt="" />
+        <img className="suitLower" src={image} alt="" />
+        <p className="cardLabel">{username}</p>
+      </div>
+    </>
   );
 }

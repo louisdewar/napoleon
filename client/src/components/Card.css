@@ -48,3 +48,13 @@
   right: 10px;
   bottom: 10px;
 }
+
+.cardLabel {
+  font-size: 18px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -50px;
+  opacity: 0.5;
+  color: black;
+}
