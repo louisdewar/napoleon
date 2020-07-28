@@ -59,7 +59,7 @@ export function gameRoundOver(winnerPlayerID) {
 export function gameOver(
   napoleonScoreDelta,
   playerScoreDelta,
-  napoleonBet,
+  napoleonBid,
   combinedNapoleonScore,
   allies
 ) {
@@ -67,7 +67,7 @@ export function gameOver(
     type: 'GAME_OVER',
     napoleonScoreDelta,
     playerScoreDelta,
-    napoleonBet,
+    napoleonBid,
     combinedNapoleonScore,
     allies,
   };

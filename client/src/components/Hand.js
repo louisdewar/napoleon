@@ -11,11 +11,12 @@ export default function Hand({ cards, onSelect, disabledCards = [] }) {
         <Card
           suit={card.suit}
           number={card.number}
-          key={card.number + card.suit}
+          key={card.number + card.suit + card.playerID}
           disabled={disabledCards.indexOf(i) !== -1}
-          onSelect={onSelect? onSelect.bind(null, i) : undefined}
+          onSelect={onSelect ? onSelect.bind(null, i) : undefined}
           className={card.className}
-          username={card.username}
+          descriptionA={card.descriptionA}
+          descriptionB={card.descriptionB}
         />
       ))}
     </div>

@@ -1,0 +1,14 @@
+.roundInfo {
+  color: white;
+  font-size: 30px;
+  border-spacing: 20px;
+  margin: 10px auto;
+}
+
+.roundInfo .trumpSuit {
+  height: 40px;
+}
+
+.roundInfo td {
+  margin: 10px;
+}

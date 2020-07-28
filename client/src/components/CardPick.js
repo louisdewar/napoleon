@@ -1,6 +1,6 @@
-import React, {useCallback} from 'react';
-import classnames from 'classnames'; 
-import {numbers, suits} from '../util';
+import React, { useCallback } from 'react';
+import classnames from 'classnames';
+import { numbers, suits } from '../util';
 
 import Heart from '../assets/images/heart.png';
 import Diamond from '../assets/images/diamond.png';
@@ -9,57 +9,68 @@ import Spade from '../assets/images/spade.png';
 import leftArrow from '../assets/images/leftArrow.svg';
 import rightArrow from '../assets/images/rightArrow.svg';
 
-
 import './CardPick.css';
 
 export default function CardPicker({ setSuit, setNumber, suit, number }) {
-  number = number === 'T'? '10' : number;
+  number = number === 'T' ? '10' : number;
   let image;
   switch (suit) {
-    case 'H':
-      image = Heart;
-      break;
+  case 'H':
+    image = Heart;
+    break;
 
-    case 'D':
-      image = Diamond;  
-      break;
+  case 'D':
+    image = Diamond;
+    break;
 
-    case 'C':
-      image = Club;  
-      break;
+  case 'C':
+    image = Club;
+    break;
 
-    case 'S':
-      image = Spade;  
-      break;
-    
-    default:
-      console.error(`Suit ${suit} was invalid!`);
+  case 'S':
+    image = Spade;
+    break;
+
+  default:
+    console.error(`Suit ${suit} was invalid!`);
   }
 
   const changeSuit = useCallback(
     direction => {
-      if (direction === 'l'){ 
-        setSuit(oldSuit => suits[(suits.indexOf(oldSuit) + suits.length - 1) % suits.length]);
-      }
-      else {
+      if (direction === 'l') {
+        setSuit(
+          oldSuit =>
+            suits[(suits.indexOf(oldSuit) + suits.length - 1) % suits.length]
+        );
+      } else {
         setSuit(oldSuit => suits[(suits.indexOf(oldSuit) + 1) % suits.length]);
       }
-    }, [setSuit] 
+    },
+    [setSuit]
   );
 
   const changeNumber = useCallback(
     direction => {
-      if (direction === 'l'){
-        setNumber(oldNum => numbers[(numbers.indexOf(oldNum) + numbers.length - 1) % numbers.length]);
+      if (direction === 'l') {
+        setNumber(
+          oldNum =>
+            numbers[
+              (numbers.indexOf(oldNum) + numbers.length - 1) % numbers.length
+            ]
+        );
+      } else {
+        setNumber(
+          oldNum => numbers[(numbers.indexOf(oldNum) + 1) % numbers.length]
+        );
       }
-      else {
-        setNumber(oldNum => numbers[(numbers.indexOf(oldNum) + 1) % numbers.length]);
-      }
-    }, [setNumber]
-  )
+    },
+    [setNumber]
+  );
 
   return (
-    <div className={classnames('cardpick', { red: suit === 'H' || suit === 'D' })}>
+    <div
+      className={classnames('cardpick', { red: suit === 'H' || suit === 'D' })}
+    >
       <span className="number">{number}</span>
       <img className="suit" src={image} alt="" />
       <span className="arrow-l-suit" onClick={changeSuit.bind(null, 'l')}>
@@ -77,3 +88,4 @@ export default function CardPicker({ setSuit, setNumber, suit, number }) {
     </div>
   );
 }
+

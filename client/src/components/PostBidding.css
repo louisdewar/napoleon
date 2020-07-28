@@ -14,7 +14,6 @@
 .postbidding .hand {
   display: flex;
   position: relative;
-
 }
 
 .selectCard .cardpick {
@@ -49,7 +48,7 @@ p {
   margin-bottom: 50px;
 }
 
-input[type=submit] {
+input[type="submit"] {
   font-family: Quicksand-Regular;
   font-weight: bolder;
   cursor: pointer;
@@ -58,17 +57,23 @@ input[type=submit] {
   border: 0;
   font-size: 30px;
   padding: 11px 20px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(106, 129, 236, 0.51) 100%), rgba(162, 238, 255, 0.89);
+  background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(106, 129, 236, 0.51) 100%
+    ),
+    rgba(162, 238, 255, 0.89);
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
 }
 
-input[type=submit]:hover {
+input[type="submit"]:hover {
   text-shadow: 0px 0px 6px #fff;
-  -webkit-box-shadow: 0px 5px 30px -10px #B1F1FF;
-  -moz-box-shadow: 0px 5px 30px -10px #B1F1FF;
+  -webkit-box-shadow: 0px 5px 30px -10px #b1f1ff;
+  -moz-box-shadow: 0px 5px 30px -10px #b1f1ff;
   transition: all 0.4s ease 0s;
 }
 
-input[type=submit]:focus {
+input[type="submit"]:focus {
   outline: none;
 }
+

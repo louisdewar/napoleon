@@ -386,17 +386,20 @@ impl Room {
                                 self.broadcast(RoomEvent::RoundOver {
                                     winner: id_map[winner],
                                 });
-                                context.run_later(std::time::Duration::new(5, 0), move |room, _context| {
-                                    room.broadcast(RoomEvent::NextPlayer {
-                                        player_id: next_player_id,
-                                        required_suit: None,
-                                    });
-                                });
+                                context.run_later(
+                                    std::time::Duration::new(5, 0),
+                                    move |room, _context| {
+                                        room.broadcast(RoomEvent::NextPlayer {
+                                            player_id: next_player_id,
+                                            required_suit: None,
+                                        });
+                                    },
+                                );
                             }
                             GameEnded {
                                 combined_napoleon_score,
                                 napoleon,
-                                allies,
+                                mut allies,
                             } => {
                                 // TODO: decide scoring
                                 // TODO: implement room wide score
@@ -407,6 +410,9 @@ impl Room {
                                         (-10, 15)
                                     };
 
+                                for ally in &mut allies {
+                                    *ally = id_map[*ally];
+                                }
                                 self.broadcast(RoomEvent::GameOver {
                                     napoleon_score_delta,
                                     player_score_delta,

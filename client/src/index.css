@@ -1,6 +1,15 @@
 body {
   margin: 0;
-  background: linear-gradient(0.11deg, #B1F1FF 2.44%, rgba(251, 238, 255, 0.261348) 46.86%, rgba(255, 255, 255, 0) 99.92%), #6A81EC;
+  background: linear-gradient(
+      0.11deg,
+      #b1f1ff 2.44%,
+      rgba(251, 238, 255, 0.261348) 46.86%,
+      rgba(255, 255, 255, 0) 99.92%
+    ),
+    #6a81ec;
   min-height: 100vh;
   text-align: center;
+
+  font-family: Quicksand-Regular;
 }
+

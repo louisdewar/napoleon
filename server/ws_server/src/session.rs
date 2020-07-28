@@ -150,7 +150,7 @@ impl Handler<RoomEvent> for Session {
                 output.push(trump_suit.to_char());
                 for ally in allies {
                     output.push(',');
-                    output.push_str(&format!("{},{}", ally.number, ally.suit.to_char()));
+                    output.push_str(&format!("{}{}", ally.number, ally.suit.to_char()));
                 }
 
                 output
