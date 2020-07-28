@@ -400,7 +400,12 @@ impl Room {
                                 combined_napoleon_score,
                                 napoleon,
                                 mut allies,
+                                final_winner,
                             } => {
+                                self.broadcast(RoomEvent::RoundOver {
+                                    winner: final_winner,
+                                });
+
                                 // TODO: decide scoring
                                 // TODO: implement room wide score
                                 let (napoleon_score_delta, player_score_delta) =
@@ -413,13 +418,19 @@ impl Room {
                                 for ally in &mut allies {
                                     *ally = id_map[*ally];
                                 }
-                                self.broadcast(RoomEvent::GameOver {
-                                    napoleon_score_delta,
-                                    player_score_delta,
-                                    allies,
-                                    combined_napoleon_score,
-                                    napoleon_bet: napoleon.bid,
-                                });
+
+                                context.run_later(
+                                    std::time::Duration::new(5, 0),
+                                    move |room, _context| {
+                                        room.broadcast(RoomEvent::GameOver {
+                                            napoleon_score_delta,
+                                            player_score_delta,
+                                            allies,
+                                            combined_napoleon_score,
+                                            napoleon_bet: napoleon.bid,
+                                        })
+                                    },
+                                );
                             }
                         }
                     }

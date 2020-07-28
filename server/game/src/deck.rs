@@ -111,7 +111,7 @@ impl Card {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Deck {
     inner: Vec<Card>,
 }
@@ -183,8 +183,40 @@ impl Deck {
         Some(self.inner.remove(index))
     }
 
+    /// Removes cards from self by `pop` distributing the `cards_per_hand` cards into
+    /// `number_of_hands` separate decks.
+    /// If there are no enough cards in `self` this method returns None, in which case `self` will
+    /// be empty after this method call.
+    pub fn pop_into_hands(
+        &mut self,
+        number_of_hands: usize,
+        cards_per_hand: usize,
+    ) -> Option<Vec<Deck>> {
+        (0..number_of_hands)
+            .into_iter()
+            .map(|_| {
+                (0..cards_per_hand)
+                    .into_iter()
+                    .map(|_| self.pop())
+                    .collect::<Option<Vec<Card>>>()
+            })
+            .map(|cards| Some(Deck { inner: cards? }))
+            .collect()
+    }
+
     pub fn into_iter(self) -> impl Iterator<Item = Card> {
         self.inner.into_iter()
+    }
+}
+
+impl std::iter::FromIterator<Card> for Deck {
+    fn from_iter<T>(iterator: T) -> Self
+    where
+        T: IntoIterator<Item = Card>,
+    {
+        Deck {
+            inner: iterator.into_iter().collect(),
+        }
     }
 }
 

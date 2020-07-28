@@ -4,12 +4,13 @@ pub use deck::{Card, Deck, Suit};
 
 use serde::Serialize;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Napoleon {
     pub bid: u32,
     pub player_id: usize,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 enum GameState {
     Bidding {
         current_player: usize,
@@ -24,15 +25,18 @@ enum GameState {
         trump_suit: Suit,
         current_player: usize,
         played_cards: Vec<Card>,
+        round_first_player: usize,
         required_suit: Option<Suit>,
     },
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum BiddingEvent {
     NextBidder { player_id: usize },
     BiddingFinished { napoleon: Napoleon },
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum BiddingError {
     BidTooLow { min: u32 },
     BidTooHigh { max: u32 },
@@ -41,16 +45,19 @@ pub enum BiddingError {
     NoBids,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum PostBiddingEvent {
     AlliesChosen { allies: Vec<usize> },
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum PostBiddingError {
     NotCurrentPlayer { current_player: usize },
     IncorrectAllyCount { expected: usize, received: usize },
     InvalidGameState,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum PlayingEvent {
     NextPlayer {
         player_id: usize,
@@ -61,12 +68,14 @@ pub enum PlayingEvent {
         next_player: usize,
     },
     GameEnded {
+        final_winner: usize,
         combined_napoleon_score: u32,
         napoleon: Napoleon,
         allies: Vec<usize>,
     },
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum PlayingError {
     NotCurrentPlayer { current_player: usize },
     InvalidGameState,
@@ -74,6 +83,7 @@ pub enum PlayingError {
     CardNotInHand,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct Game {
     players: usize,
     hands: Vec<Deck>,
@@ -82,7 +92,7 @@ pub struct Game {
     settings: GameSettings,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GameSettings {
     pub ally_count: usize,
     pub hand_size: u32,
@@ -104,6 +114,10 @@ impl Game {
             hands.push(hand);
         }
 
+        Self::new_with_hands(players, settings, hands)
+    }
+
+    pub fn new_with_hands(players: usize, settings: GameSettings, hands: Vec<Deck>) -> Game {
         Game {
             players,
             hands,
@@ -232,6 +246,7 @@ impl Game {
                 required_suit: Some(trump_suit.clone()),
                 trump_suit,
                 current_player: napoleon.player_id,
+                round_first_player: napoleon.player_id,
                 played_cards: Vec::with_capacity(self.players),
             };
 
@@ -253,6 +268,7 @@ impl Game {
             trump_suit,
             napoleon,
             required_suit,
+            round_first_player,
             ..
         } = &mut self.state
         {
@@ -286,7 +302,7 @@ impl Game {
                 // TODO: Even though deck supports multiple packs of cards, scoring does not.
                 // It is unclear what to do when two players both have the exact same card that is
                 // the highest number + trump suit.
-                let (winner, _card) = played_cards
+                let (winner_index, _card) = played_cards
                     .iter()
                     .enumerate()
                     .filter(|(_, card)| &card.suit == trump_suit)
@@ -299,6 +315,8 @@ impl Game {
                             .max_by_key(|(_, card)| Into::<u8>::into(&card.number))
                             .expect("The first player's card trivially must exist as a possible solution")
                     });
+
+                let winner = (winner_index + *round_first_player) % self.players;
 
                 self.score[winner] += 1;
 
@@ -319,6 +337,7 @@ impl Game {
                             })
                             .sum::<u32>();
                     return Ok(PlayingEvent::GameEnded {
+                        final_winner: winner,
                         combined_napoleon_score,
                         napoleon: napoleon.clone(),
                         allies: allies.clone(),
@@ -327,6 +346,7 @@ impl Game {
                     // Now that the round has ended the next player has no required_suit
                     *required_suit = None;
                     *current_player = winner;
+                    *round_first_player = winner;
 
                     return Ok(PlayingEvent::RoundEnded {
                         next_player: winner,
