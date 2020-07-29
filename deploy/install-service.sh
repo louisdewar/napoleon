@@ -2,7 +2,7 @@
 
 set -e
 
-cd "$( dirname "${BASH_SOURCE[0]}" )"
+cd $(dirname ${BASH_SOURCE[0]})
 
 cp napoleon.service /etc/systemd/system/
 systemctl daemon-reload
