@@ -12,7 +12,7 @@ $HOME/.cargo/bin/cargo build --release
 cd ..
 
 cp server/target/release/ws_server /etc/napoleon/bin
-rm -r /etc/napoleon/www || {}
+rm -r /etc/napoleon/www || echo "www did not exist"
 mv client/build /etc/napoleon/www
 
 sudo service napoleon restart
