@@ -403,7 +403,7 @@ impl Room {
                                 final_winner,
                             } => {
                                 self.broadcast(RoomEvent::RoundOver {
-                                    winner: final_winner,
+                                    winner: id_map[final_winner],
                                 });
 
                                 // TODO: decide scoring
