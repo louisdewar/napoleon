@@ -11,8 +11,7 @@ cd ../server
 cargo build --release
 cd ..
 
-mkdir -p /etc/napoleon/
-cp server/target/release/napoleon /etc/napoleon/bin
+cp server/target/release/ws_server /etc/napoleon/bin
 rm -r /etc/napoleon/www || {}
 mv client/build /etc/napoleon/www
 
