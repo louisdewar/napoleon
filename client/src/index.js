@@ -11,7 +11,11 @@ import WebsocketManager from './state/websocket_manager';
 import './fonts.css';
 import './index.css';
 
+if (process.env.NODE_ENV === 'production') {
+  new WebsocketManager('ws://' + window.location.hostname + '/' + (process.env.PUBLIC_URL || '') + '/ws/', store);
+} else {
 new WebsocketManager('ws://localhost:3001/ws/', store);
+}
 
 ReactDOM.render(
   <Provider store={store}>
