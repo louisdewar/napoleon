@@ -1,5 +1,6 @@
 .allyMessage {
-    color: #660a00;
+    color: #800000;
     font-size: 36px;
     font-family: Quicksand-Bold;
+    text-decoration: underline;
 }

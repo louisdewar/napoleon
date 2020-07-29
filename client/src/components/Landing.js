@@ -34,6 +34,7 @@ export default function Landing() {
           type="text"
           value={username}
           onChange={event =>  setUsername(event.target.value)}
+          maxLength="15"
         />
         <div className={room}>
           <hr></hr>
@@ -44,7 +45,7 @@ export default function Landing() {
               type="text"
               value={roomCode}
               onChange={event => setRoomCode(event.target.value)}
-              maxLength="15"
+              maxLength="5"
             />
             <input type="submit" value="Join" />
           </form>
@@ -54,7 +55,6 @@ export default function Landing() {
             <input 
               type="submit" 
               value="Create Room"
-              maxLength="5"
             />
           </form>  
         </div>

@@ -21,15 +21,15 @@ export default function GameOver({ game, users }) {
       <p>{allies}</p>
       <p>
         The napoleon bid {game.napoleonBid} and the combined score was{' '}
-        {game.combinedNapoleonScore} which means that the napoleon and their
+        <span className="score">{game.combinedNapoleonScore}</span> which means that the napoleon and their
         allies
-        {game.napoleonScoreDelta < 0
+        <span className="score">{game.napoleonScoreDelta < 0
           ? ' lose ' + -1 * game.napoleonScoreDelta
-          : ' gain ' + game.napoleonScoreDelta}{' '}
+          : ' gain ' + game.napoleonScoreDelta}</span>{' '}
         and the other players
-        {game.playerScoreDelta < 0
+        <span className="score">{game.playerScoreDelta < 0
           ? ' lose ' + -1 * game.playerScoreDelta
-          : ' gain ' + game.playerScoreDelta}
+          : ' gain ' + game.playerScoreDelta}</span>
         .
       </p>
     </div>

@@ -2,7 +2,7 @@ import React from 'react';
 
 import './RoundInfo.css';
 
-import Card, { MiniCard, suitToImage } from './Card';
+import { MiniCard, suitToImage } from './Card';
 
 export default function RoundInfo({
   allyCards,

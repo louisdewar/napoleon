@@ -5,3 +5,8 @@
 .gameOver h1 {
   font-size: 70px;
 }
+
+.ally, .score {
+  font-family: Quicksand-Bold;
+  color: #57fcd1;
+}
