@@ -3,6 +3,8 @@ import React, { useMemo } from 'react';
 import Hand from './Hand';
 import RoundInfo from './RoundInfo';
 
+import './Round.css';
+
 export default function Round({ userID, game, users, socket }) {
   const disabledCards = useMemo(() => {
     let disabled = [];
@@ -29,6 +31,7 @@ export default function Round({ userID, game, users, socket }) {
         card.playerID
       ] || 0})`,
       descriptionB: game.napoleonID === card.playerID ? 'Napoleon' : '',
+      playerID: card.playerID,
     };
   });
 
@@ -55,6 +58,9 @@ export default function Round({ userID, game, users, socket }) {
     </>
   );
 
+  let allyMessage = game.ally ? <h2 className="allyMessage">You are a secret ally of the Napoleon</h2> : null
+
+
   if (userID === game.playerID) {
     const onClick = id =>
       socket.playCard(game.hand[id].number, game.hand[id].suit);
@@ -63,6 +69,7 @@ export default function Round({ userID, game, users, socket }) {
       return (
         <>
           {roundInfo}
+          {allyMessage}
           <p>Your hand:</p>
           <Hand cards={game.hand} />
           <p>{users[game.winner].username} won the round!</p>
@@ -74,6 +81,7 @@ export default function Round({ userID, game, users, socket }) {
     return (
       <>
         {roundInfo}
+        {allyMessage}
         <p>Choose a card to play:</p>
         <Hand
           cards={game.hand}
@@ -87,6 +95,7 @@ export default function Round({ userID, game, users, socket }) {
     return (
       <>
         {roundInfo}
+        {allyMessage}
         <p>Your hand:</p>
         <Hand cards={game.hand} />
         <p>{users[game.playerID].username} is currently picking a card</p>

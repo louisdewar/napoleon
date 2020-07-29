@@ -48,7 +48,7 @@ export default function Card({
   descriptionB,
 }) {
   number = number === 'T' ? '10' : number;
-  const image = suitToImage(suit);
+  const image = suit? suitToImage(suit) : null;
 
   return (
     <div className="cardWrapper">
