@@ -8,7 +8,7 @@ yarn
 yarn build
 
 cd ../server
-cargo build --release
+$HOME/.cargo/bin/cargo build --release
 cd ..
 
 cp server/target/release/ws_server /etc/napoleon/bin
