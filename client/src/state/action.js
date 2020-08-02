@@ -23,7 +23,7 @@ export function playerJoined(username, userID) {
 }
 
 export function gamePlayerBid(playerID, bid) {
-  if (bid) {
+  if (bid !== undefined) {
     return { type: 'GAME_PLAYER_BID', playerID, bid };
   }
   return { type: 'GAME_PLAYER_BID_NOTHING', playerID, bid: 'NO_BID' };
@@ -59,7 +59,7 @@ export function gameRoundOver(winnerPlayerID) {
 export function gameOver(
   napoleonScoreDelta,
   playerScoreDelta,
-  napoleonBet,
+  napoleonBid,
   combinedNapoleonScore,
   allies
 ) {
@@ -67,7 +67,7 @@ export function gameOver(
     type: 'GAME_OVER',
     napoleonScoreDelta,
     playerScoreDelta,
-    napoleonBet,
+    napoleonBid,
     combinedNapoleonScore,
     allies,
   };

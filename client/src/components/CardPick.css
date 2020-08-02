@@ -1,0 +1,58 @@
+.cardpick {
+    position: relative;
+    font-family: Quicksand-Regular;
+    color: #E8E8E8;
+    width: 160px;
+    height: 227px;
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid #5A4040;
+    border-radius: 14px;
+    margin: auto;
+    user-select: none;
+  }
+  
+  .cardpick.red {
+    color: #E74C3C;
+  }
+  
+  .cardpick .number {
+    position: absolute;
+    font-size: 64px;
+    left: 50%;
+    bottom: 50%;
+    transform: translate(-50%, 50%);
+  }
+  
+  .cardpick .suit {
+    position: absolute;
+    width: 35px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    top: 20px;
+  }
+
+  .arrow-l-suit {
+    position: absolute;
+    top: 30px;
+    left: 10px;
+  }
+
+  .arrow-r-suit {
+    position: absolute;
+    top: 30px;
+    right: 10px;
+  }
+
+  .arrow-l-number {
+    position: absolute;
+    left: 10px;
+    bottom: 50%;
+    transform: translate(0, 50%);
+  }
+
+  .arrow-r-number {
+    position: absolute;
+    right: 10px;
+    bottom: 50%;
+    transform: translate(0, 50%);
+  }

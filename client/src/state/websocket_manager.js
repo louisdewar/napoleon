@@ -82,7 +82,7 @@ export default class WebsocketManager {
       const trumpSuit = parts[0];
       const allies = [];
       for (i = 1; i < parts.length; i++) {
-        allies.push(parts[i]);
+        allies.push({ number: parts[i][0], suit: parts[i][1] });
       }
       this.store.dispatch(gameAlliesChosen(trumpSuit, allies));
     } else if (msg.slice(0, 2) === 'ab') {
@@ -110,7 +110,7 @@ export default class WebsocketManager {
       const [
         napoleonScoreDelta,
         playerScoreDelta,
-        napoleonBet,
+        napoleonBid,
         combinedNapoleonScore,
       ] = [parts[0], parts[1], parts[2], parts[3]];
       const allies = [];
@@ -123,7 +123,7 @@ export default class WebsocketManager {
         gameOver(
           napoleonScoreDelta,
           playerScoreDelta,
-          napoleonBet,
+          napoleonBid,
           combinedNapoleonScore,
           allies
         )

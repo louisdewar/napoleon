@@ -6,8 +6,10 @@ use game::*;
 
 use slog::warn;
 
-impl Room {
-    fn handle_message(&mut self, ws_message: WebsocketMessage) {
+impl Handler<WebsocketMessage> for Room {
+    type Result = ();
+
+    fn handle(&mut self, ws_message: WebsocketMessage, context: &mut Self::Context) {
         let session_id = ws_message.session_id;
         let content = ws_message.content;
         let mut message = content.chars().peekable();
@@ -91,18 +93,10 @@ impl Room {
                     warn!(self.logger, "Couldn't parse card from chars in play card"; "session_id" => session_id, "suit_char" => s, "number_char" => n);
                     return;
                 };
-                self.play_card(session_id, card);
+                self.play_card(session_id, card, context);
             }
             _ => {}
-        }
-    }
-}
-
-impl Handler<WebsocketMessage> for Room {
-    type Result = ();
-
-    fn handle(&mut self, ws_message: WebsocketMessage, _context: &mut Self::Context) {
-        self.handle_message(ws_message);
+        }   
     }
 }
 

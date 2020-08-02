@@ -1,0 +1,86 @@
+.card {
+  position: relative;
+  font-family: Quicksand-Regular;
+  color: #e8e8e8;
+  width: 160px;
+  height: 227px;
+  margin: 10px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #5a4040;
+  border-radius: 14px;
+  user-select: none;
+}
+
+.card.placeholder {
+  background: transparent;
+  border: 2px dashed #5a4040;
+}
+
+.miniCard {
+  background-color: rgba(0, 0, 0, 0.85);
+  border-radius: 10px;
+  height: 50px;
+  width: 80px;
+  position: relative;
+}
+
+.miniCard .number {
+  position: absolute;
+  left: 10px;
+  font-size: 40px;
+}
+
+.miniCard img {
+  position: absolute;
+  right: 10px;
+  height: 30px;
+  top: 10px;
+}
+
+.card.winner {
+  border: 2px solid #fac000;
+}
+
+.card.red,
+.miniCard.red {
+  color: #e74c3c;
+}
+
+.card.disabled {
+  opacity: 0.6;
+}
+
+.card.clickable {
+  cursor: pointer;
+}
+
+.card .number {
+  position: absolute;
+  font-size: 56px;
+  left: 50%;
+  bottom: 50%;
+  transform: translate(-50%, 25%);
+}
+
+.card .suitUpper {
+  position: absolute;
+  width: 30px;
+  left: 10px;
+  top: 10px;
+}
+
+.card .suitLower {
+  position: absolute;
+  width: 30px;
+  right: 10px;
+  bottom: 10px;
+}
+
+.cardWrapper label,
+.cardLabel {
+  font-size: 18px;
+  opacity: 0.5;
+  color: black;
+  display: block;
+  margin: 0;
+}

@@ -21,8 +21,6 @@ export default function Room({ userID, room, socket }) {
   return (
     <>
       {content}
-      <br />
-      {JSON.stringify(room)}
     </>
   );
 }

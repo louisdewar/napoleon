@@ -1,0 +1,8 @@
+[Unit]
+description=napoleon gameserver
+
+[Service]
+ExecStart=/etc/napoleon/bin
+
+[Install]
+WantedBy=multi-user.target

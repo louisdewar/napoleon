@@ -1,0 +1,7 @@
+.hand {
+    display: flex;
+    margin: 10px auto;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: center;
+}

@@ -351,7 +351,7 @@ impl Room {
         }
     }
 
-    fn play_card(&mut self, session_id: usize, card: Card) {
+    fn play_card(&mut self, session_id: usize, card: Card, context: &mut Context<Self>) {
         use PlayingError::*;
         use PlayingEvent::*;
 
@@ -381,20 +381,31 @@ impl Room {
                                 winner,
                                 next_player,
                             } => {
+                                let next_player_id = id_map[next_player];
+
                                 self.broadcast(RoomEvent::RoundOver {
                                     winner: id_map[winner],
                                 });
-
-                                self.broadcast(RoomEvent::NextPlayer {
-                                    player_id: id_map[next_player],
-                                    required_suit: None,
-                                });
+                                context.run_later(
+                                    std::time::Duration::new(5, 0),
+                                    move |room, _context| {
+                                        room.broadcast(RoomEvent::NextPlayer {
+                                            player_id: next_player_id,
+                                            required_suit: None,
+                                        });
+                                    },
+                                );
                             }
                             GameEnded {
                                 combined_napoleon_score,
                                 napoleon,
-                                allies,
+                                mut allies,
+                                final_winner,
                             } => {
+                                self.broadcast(RoomEvent::RoundOver {
+                                    winner: id_map[final_winner],
+                                });
+
                                 // TODO: decide scoring
                                 // TODO: implement room wide score
                                 let (napoleon_score_delta, player_score_delta) =
@@ -404,13 +415,22 @@ impl Room {
                                         (-10, 15)
                                     };
 
-                                self.broadcast(RoomEvent::GameOver {
-                                    napoleon_score_delta,
-                                    player_score_delta,
-                                    allies,
-                                    combined_napoleon_score,
-                                    napoleon_bet: napoleon.bid,
-                                });
+                                for ally in &mut allies {
+                                    *ally = id_map[*ally];
+                                }
+
+                                context.run_later(
+                                    std::time::Duration::new(5, 0),
+                                    move |room, _context| {
+                                        room.broadcast(RoomEvent::GameOver {
+                                            napoleon_score_delta,
+                                            player_score_delta,
+                                            allies,
+                                            combined_napoleon_score,
+                                            napoleon_bet: napoleon.bid,
+                                        })
+                                    },
+                                );
                             }
                         }
                     }
@@ -424,7 +444,8 @@ impl Room {
                             self.logger,
                             "Session tried to play card when they weren't the current player";
                             "session_id" => session_id,
-                            "current_bidder" => current_player
+                            "player_id" => player_id,
+                            "current_player" => current_player
                         ),
                         CardNotInHand => warn!(
                             self.logger,
